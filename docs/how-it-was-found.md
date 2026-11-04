@@ -98,10 +98,23 @@ Four differences remained, each added as a live switch, defaulting to the refere
 - GPIO1 is now the default CS42L83 reset pin, and the boot-time register dump is off.
 - One-step `install.sh` for a fresh Omarchy install.
 
+## After v0.9: everyday listening
+
+- **Distortion on YouTube.** `hw_params` showed the speakers running at **48 kHz**; every earlier
+  test had used 44.1 kHz, the rate the clock settings came from. Forcing PipeWire to 44.1 kHz
+  (`pw-metadata -n settings 0 clock.force-rate 44100`) cleared it. Now permanent in
+  `config/pipewire/50-imac-rate.conf`.
+- **Thin sound.** The stereo profile only drives the tweeters. The 4-channel profile plus
+  PipeWire's `channelmix.upmix` (method `simple`) copies stereo to the woofers. Measured from the
+  sink monitor: tweeters −35.2 dB, woofers −38.2 dB; the simple upmix copies to the rear at −3 dB.
+- A measurement pitfall: `parec --channels=4` without `--channel-map` records PulseAudio's
+  default 4-channel layout (FL, FC, FR, RC), not FL/FR/RL/RR. That briefly made a working set-up
+  look as if the right tweeter were silent.
+
 ## Still to do
 
-1. Everyday sound: a 4-channel profile with stereo upmixed to the woofers (config included,
-   untested), then Apple's layout-16 crossover as a PipeWire filter-chain.
+1. Apple's layout-16 tuning (crossover, EQ, unity-gain woofers) as a PipeWire filter-chain, to
+   replace the plain upmix.
 2. Isolate which start-sequence switches are needed, and trim the diagnostics.
 3. Suspend/resume test.
 4. Headphones: CS42L83 init (CS42L42-compatible; avoid the EQ block) and jack detection

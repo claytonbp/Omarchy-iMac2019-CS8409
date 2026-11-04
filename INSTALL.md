@@ -122,30 +122,49 @@ This plays a quiet beep on each of the four channels in turn:
 The woofers sound louder because the test note (440 Hz) is low for a tweeter. If you hear
 nothing, see [Troubleshooting](#troubleshooting).
 
-## 7. Everyday sound: use all four speakers
+## 7. Everyday sound: 44.1 kHz and all four speakers
 
-> **Not yet tested on this machine.** Steps 1–6 are tested; this one is the planned next step.
+Tested on this machine: YouTube and a measured stereo test through PipeWire.
 
-PipeWire's normal **stereo** profile only drives channels 1–2, which is the tweeters, so
-music sounds thin. To use all four speakers, switch the card to its 4-channel profile and
-let PipeWire copy stereo to the woofers:
+Run these as your **normal user** (not with `sudo`). They need two PipeWire settings:
+
+- **44.1 kHz only.** The driver's speaker clocks are set up for 44.1 kHz, the rate Apple
+  uses. At PipeWire's usual 48 kHz (YouTube, most video) the sound is **distorted**. This
+  setting makes PipeWire convert everything to 44.1 kHz first.
+- **Stereo on all four speakers.** PipeWire's stereo profile only drives channels 1–2 (the
+  tweeters), which sounds thin. The 4-channel profile plus "upmix" copies stereo to the
+  woofers as well.
 
 ```bash
-# 4-channel output profile (WirePlumber remembers it)
-pactl set-card-profile alsa_card.pci-0000_00_1f.3 output:analog-surround-40+input:analog-stereo
+# 44.1 kHz only
+mkdir -p ~/.config/pipewire/pipewire.conf.d
+cp config/pipewire/50-imac-rate.conf ~/.config/pipewire/pipewire.conf.d/
 
 # copy stereo to the rear (woofer) channels
 mkdir -p ~/.config/pipewire/client.conf.d ~/.config/pipewire/pipewire-pulse.conf.d
 cp config/pipewire/50-imac-upmix.conf ~/.config/pipewire/client.conf.d/
 cp config/pipewire/50-imac-upmix.conf ~/.config/pipewire/pipewire-pulse.conf.d/
+
 systemctl --user restart pipewire pipewire-pulse wireplumber
+sleep 3
+
+# 4-channel output profile (WirePlumber remembers it)
+pactl set-card-profile alsa_card.pci-0000_00_1f.3 output:analog-surround-40+input:analog-stereo
 ```
 
 If `pactl` says the profile name doesn't exist, list the real names with
 `pactl list cards | grep -A30 'Profiles:'`.
 
-This drives the tweeters and woofers with the same full-range signal. Apple also splits the
-sound between them (a crossover), and recreating that is a separate, later step.
+**Check it** with `bash tools/upmix-test.sh` (normal user). It installs the upmix setting
+too, plays a stereo test and measures each channel. Expected: hardware `rate: 44100`,
+`channels: 4`; tweeters around −35 dB and woofers about **3 dB lower** (PipeWire's upmix
+copies to the rear at −3 dB); then `PASS`. While music plays,
+`cat /proc/asound/card0/pcm0p/sub0/hw_params` should show `rate: 44100`.
+
+This drives the tweeters and woofers with the same full-range signal, and the woofers sit
+3 dB lower. Apple also splits the sound between them (a crossover) and adds EQ; recreating
+that is a separate, later step. Until then, avoid very high volumes: the tweeters receive
+bass they aren't built for.
 
 **Volume:** use the normal desktop volume control (PipeWire). Never play loud material
 straight to the raw `hw:0,0` / `plughw:0,0` device: it has no volume control.

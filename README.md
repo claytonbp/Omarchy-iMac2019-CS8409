@@ -7,6 +7,7 @@ CS8409 audio bridge, built and tested on one machine, step by step, in November 
 | | Out of the box | With this driver |
 |---|---|---|
 | Internal speakers (4) | silent: the stock driver never sets up the amplifiers | **working** |
+| Everyday stereo (YouTube, music) | — | **working**: PipeWire at 44.1 kHz + 4-channel upmix ([INSTALL.md step 7](INSTALL.md#7-everyday-sound-441-khz-and-all-four-speakers)) |
 | Headphone jack | silent | not done yet |
 | Internal / headset microphone | not working | not done yet |
 | Suspend / resume | — | not tested yet (the driver re-runs its setup on wake) |
@@ -26,7 +27,7 @@ sudo ./tools/tone-test.sh
 ```
 
 Full step-by-step instructions, including what to check after each step and how to
-make normal stereo use all four speakers: **[INSTALL.md](INSTALL.md)**.
+set up PipeWire for everyday listening (44.1 kHz, all four speakers): **[INSTALL.md](INSTALL.md)**.
 
 ## What's in here
 
@@ -35,7 +36,7 @@ make normal stereo use all four speakers: **[INSTALL.md](INSTALL.md)**.
 | [`install.sh`](install.sh) | One-step installer: build tools, kernel headers, driver (DKMS), settings |
 | [`INSTALL.md`](INSTALL.md) | Full instructions for a fresh Omarchy install |
 | [`driver/`](driver/) | The driver source: Linux 7.2.15 CS8409 files + [`cs8409_apple.c`](driver/src/codecs/cirrus/cs8409_apple.c) |
-| [`config/`](config/) | modprobe settings, and an optional (untested) PipeWire upmix config |
+| [`config/`](config/) | modprobe settings, and the PipeWire 44.1 kHz and upmix settings |
 | [`tools/`](tools/) | Check, test, capture and live-switch scripts |
 | [`docs/hardware-map.md`](docs/hardware-map.md) | Every chip, address, register and value measured on this iMac |
 | [`docs/how-it-was-found.md`](docs/how-it-was-found.md) | How the driver was worked out, version by version |

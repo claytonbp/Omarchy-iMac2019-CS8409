@@ -571,3 +571,44 @@ create an empty one, and whether it should be public or private.*
 *Claude assembled this repository: the driver as v0.9 (GPIO1 as the default reset pin,
 boot-time dump off), `install.sh`, the settings, the tools, the documentation, the logs and
 this transcript.*
+
+**Claude:** *(The repository was pushed after the owner installed the Claude GitHub App on it.
+Claude then suggested testing INSTALL.md step 7, the only untested part, before wiping.)*
+
+**Owner:** can we please test this now?
+
+*Claude wrote `tools/upmix-test.sh`: it installs the upmix setting, switches to the 4-channel
+profile, plays a stereo test, and measures each channel from the sink monitor.*
+
+**Owner:** I am now testing the audio out on a YouTube video and it sounds distorted. Do I
+need to adjust settings in pipewire?
+
+**Claude:** Probably yes. There are two likely causes: the sample rate (every test so far ran
+at 44.1 kHz, and YouTube usually plays at 48 kHz) or the missing crossover. Turn the volume
+down first, check `hw_params` while the video plays, and if it says 48000, try
+`pw-metadata -n settings 0 clock.force-rate 44100`.
+
+**Owner:** *(`hw_params`: `channels: 4`, `rate: 48000`; the force-rate command accepted)*
+
+**Claude:** That confirms it: the speakers were running at 48 kHz. Reload the video and check
+for `rate: 44100`. If the distortion is gone, make it permanent with
+`~/.config/pipewire/pipewire.conf.d/50-imac-rate.conf` (`default.clock.allowed-rates = [ 44100 ]`).
+
+**Owner:** Audio is much better, however it sounds flat with not much bass
+
+**Claude:** Good, the rate was the cause. The flat sound is most likely the woofers getting
+nothing: without the upmix, stereo only reaches the tweeters. Run `upmix-test.sh`.
+
+**Owner:** *(first run: "FL −35.2, FR −120.0, RL −35.2, RR −30.5 dB, RESULT: PASS")*
+
+**Claude:** The script printed PASS, but that's my mistake: it only compared the loudest front
+with the loudest rear. I fixed the check. The sink itself was correct (4 channels in order,
+equal volumes), so the problem was the measurement: `parec`'s default 4-channel layout is
+front-left / centre / front-right / rear-centre, which explains the numbers exactly. The
+script now asks for the real layout.
+
+**Owner:** *(second run: "FL −35.2, FR −35.2, RL −38.2, RR −38.2 dB")*
+
+**Claude:** All four speakers now get the stereo signal. The woofers are 3.0 dB lower, which is
+how PipeWire's simple upmix works (it copies to the rear at −3 dB). Step 7's two settings,
+44.1 kHz and the upmix, are now confirmed and recorded in the repository.

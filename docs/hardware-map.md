@@ -118,6 +118,10 @@ are enabled as inputs. At stream stop: amps off (reg `01` = `fc`), slots parked 
 
 ## Hazards
 
+- **Run the speakers at 44.1 kHz only.** The speaker clock settings are 44.1 kHz ones
+  (Apple's rate). At 48 kHz, PipeWire's default for video, the sound is distorted. Set
+  `default.clock.allowed-rates = [ 44100 ]` (see `config/pipewire/50-imac-rate.conf`).
+
 - **Never read CS42L83 register `0x2407`** (EQ_COEF_OUT0) or the rest of its EQ block. It
   makes the CS42L83 hold the I2C bus until it's reset. Seen twice, and recovered by holding
   GPIO1 low.
