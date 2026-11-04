@@ -95,14 +95,16 @@ for c in range(4):
 print("Level PipeWire sent to each channel:")
 for nm, l in zip(names, lv):
     print("  %-20s %7.1f dB" % (nm, l))
-front, rear = max(lv[0], lv[1]), max(lv[2], lv[3])
 print()
-if front < -80:
+top = max(lv)
+silent = [nm for nm, l in zip(names, lv) if l < -80]
+uneven = [nm for nm, l in zip(names, lv) if l >= -80 and top - l > 3]
+if top < -80:
     print("RESULT: no signal at all reached the sink -- check that audio plays at all.")
-elif rear < -80:
-    print("RESULT: FAIL -- the woofer channels are silent; stereo is not being upmixed.")
-elif abs(front - rear) <= 6:
-    print("RESULT: PASS -- stereo reaches all four channels (woofers and tweeters).")
+elif silent:
+    print("RESULT: FAIL -- silent: " + ", ".join(silent))
+elif uneven:
+    print("RESULT: UNEVEN -- more than 3 dB below the loudest: " + ", ".join(uneven))
 else:
-    print("RESULT: PARTIAL -- woofers get signal, but %.1f dB different from the tweeters." % (rear - front))
+    print("RESULT: PASS -- all four channels within 3 dB of each other.")
 EOF
