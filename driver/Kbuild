@@ -1,0 +1,6 @@
+# SPDX-License-Identifier: GPL-2.0
+# Out-of-tree build of snd-hda-codec-cs8409 with Apple support.
+# Sources are Linux 7.2.15 sound/hda files plus src/codecs/cirrus/cs8409_apple.c
+obj-m += snd-hda-codec-cs8409.o
+snd-hda-codec-cs8409-y := src/codecs/cirrus/cs8409.o src/codecs/cirrus/cs8409-tables.o
+ccflags-y += -I$(src)/src/common

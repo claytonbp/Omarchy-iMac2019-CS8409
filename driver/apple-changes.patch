@@ -1,0 +1,58 @@
+--- a/sound/hda/codecs/cirrus/cs8409.h
++++ b/sound/hda/codecs/cirrus/cs8409.h
+@@ -274,6 +274,7 @@
+ 	CS8409_ODIN,
+ 	CS8409_CDB35L56_FOUR_HD,
+ 	CS8409_CDB35L56_FOUR_HD_FIXUP,
++	CS8409_APPLE,		/* Apple iMac18,3 / iMac19,1, codec SSID 0x106b1000 */
+ };
+ 
+ enum {
+@@ -381,6 +382,7 @@
+ 
+ void cs8409_cs42l42_fixups(struct hda_codec *codec, const struct hda_fixup *fix, int action);
+ void dolphin_fixups(struct hda_codec *codec, const struct hda_fixup *fix, int action);
++void cs8409_apple_fixups(struct hda_codec *codec, const struct hda_fixup *fix, int action);
+ 
+ extern const struct cs8409_cir_param cs8409_cdb35l56_four_hw_cfg[];
+ extern const struct hda_verb cs8409_cdb35l56_four_init_verbs[];
+--- a/sound/hda/codecs/cirrus/cs8409-tables.c
++++ b/sound/hda/codecs/cirrus/cs8409-tables.c
+@@ -538,6 +538,8 @@
+  ******************************************************************************/
+ 
+ const struct hda_quirk cs8409_fixup_tbl[] = {
++	/* Apple: match the CODEC SSID; the PCI SSID is Intel's own (8086:7270) */
++	HDA_CODEC_QUIRK(0x106b, 0x1000, "Apple iMac19,1", CS8409_APPLE),
+ 	SND_PCI_QUIRK(0x1028, 0x0A11, "Bullseye", CS8409_BULLSEYE),
+ 	SND_PCI_QUIRK(0x1028, 0x0A12, "Bullseye", CS8409_BULLSEYE),
+ 	SND_PCI_QUIRK(0x1028, 0x0A23, "Bullseye", CS8409_BULLSEYE),
+@@ -630,6 +632,7 @@
+ 	{ .id = CS8409_DOLPHIN, .name = "dolphin" },
+ 	{ .id = CS8409_ODIN, .name = "odin" },
+ 	{ .id = CS8409_CDB35L56_FOUR_HD, .name = "CDB35L56-FOUR-HD" },
++	{ .id = CS8409_APPLE, .name = "apple" },
+ 	{}
+ };
+ 
+@@ -694,4 +697,8 @@
+ 		.type = HDA_FIXUP_FUNC,
+ 		.v.func = cs8409_cdb35l56_four_autodet_fixup,
+ 	},
++	[CS8409_APPLE] = {
++		.type = HDA_FIXUP_FUNC,
++		.v.func = cs8409_apple_fixups,
++	},
+ };
+--- a/sound/hda/codecs/cirrus/cs8409.c
++++ b/sound/hda/codecs/cirrus/cs8409.c
+@@ -1584,6 +1584,9 @@
+ 	}
+ }
+ 
++/* Apple support, see cs8409_apple.c */
++#include "cs8409_apple.c"
++
+ static int cs8409_probe(struct hda_codec *codec, const struct hda_device_id *id)
+ {
+ 	int err;

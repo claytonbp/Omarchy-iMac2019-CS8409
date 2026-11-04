@@ -1,0 +1,79 @@
+ cd ~/cs8409-apple/cs8409-apple
+./check.sh
+== Codec (want: CS8409/CS42L83, 0x106b1000)
+Codec: Cirrus Logic CS8409/CS42L83
+Subsystem Id: 0x106b1000
+Codec: ATI R6xx HDMI
+Subsystem Id: 0x00aa0100
+
+== Module file in use (want: .../updates/dkms/...)
+/lib/modules/7.2.15-1-omarchy/updates/dkms/snd-hda-codec-cs8409.ko.zst
+
+== DKMS
+cs8409-apple/0.2, 7.2.15-1-omarchy, x86_64: installed (Original modules exist)
+
+== Driver log for this boot
+Nov 04 19:01:03 intel-mac kernel: snd_hda_codec_cs8409: loading out-of-tree module taints kernel.
+Nov 04 19:01:03 intel-mac kernel: snd_hda_codec_cs8409: module verification failed: signature and/or required key missing - tainting kernel
+hdaudioC0D0: CS8409: picked fixup  for codec SSID 106b:1000
+hdaudioC0D0: apple: Apple path selected (codec SSID 0x106b1000)
+hdaudioC0D0: autoconfig for CS8409: line_outs=2 (0x24/0x25/0x0/0x0/0x0) type:speaker
+hdaudioC0D0:    speaker_outs=0 (0x0/0x0/0x0/0x0/0x0)
+hdaudioC0D0:    hp_outs=1 (0x2c/0x0/0x0/0x0/0x0)
+hdaudioC0D0:    mono: mono_out=0x0
+hdaudioC0D0:    inputs:
+hdaudioC0D0:      Internal Mic=0x45
+hdaudioC0D0:      Mic=0x3c
+hdaudioC0D0: apple: coef dump of vendor widget 0x47 (index: values)
+hdaudioC0D0: apple: coef 00: 9008 0000 0080 801f 083f 0000 8000 28ff
+hdaudioC0D0: apple: coef 08: 0000 0013 0000 0000 cccc cccc 0000 aaaa
+hdaudioC0D0: apple: coef 10: cccc 0000 cccc cccc 0000 aaaa cccc 0000
+hdaudioC0D0: apple: coef 18: 0000 0400 0420 8c20 8000 8c40 8000 8c60
+hdaudioC0D0: apple: coef 20: 8000 8000 8000 8000 8000 8000 8000 8000
+hdaudioC0D0: apple: coef 28: 8000 8000 8000 8000 8000 8000 8000 8000
+hdaudioC0D0: apple: coef 30: 8000 8000 8000 8000 8000 8000 8000 8000
+hdaudioC0D0: apple: coef 38: 8000 8000 8000 8000 8000 8000 8000 8000
+hdaudioC0D0: apple: coef 40: 8000 8000 8000 8000 8000 8000 8000 8000
+hdaudioC0D0: apple: coef 48: 8000 8000 8000 8000 8000 8000 8000 8000
+hdaudioC0D0: apple: coef 50: 8000 8000 8000 8000 8000 8000 8000 8000
+hdaudioC0D0: apple: coef 58: 0400 00de 0004 0010 0038 1305 1304 1600
+hdaudioC0D0: apple: coef 60: 0000 0000 0000 0000 0000 0000 0000 0000
+hdaudioC0D0: apple: coef 68: 0000 0000 0000 0000 0000 0000 0000 0000
+hdaudioC0D0: apple: coef 70: 0000 0000 0000 0000 000a 0001 0009 0000
+hdaudioC0D0: apple: coef 78: 0000 0000 0000 0000 0000 0000 0000 0000
+hdaudioC0D0: apple: coef 80: 0000 0000 ff00 0000 0000 0000 0000 0000
+hdaudioC0D0: apple: gpio mask=10 dir=10 data=10 wake=00 unsol=00
+hdaudioC0D0: apple: CS42L83 @0x48 reg 1001: page-sts=0028 sts=0028 val=00
+hdaudioC0D0: apple: CS42L83 @0x48 reg 1002: page-sts=0028 sts=0028 val=00
+hdaudioC0D0: apple: CS42L83 @0x48 reg 1003: page-sts=0028 sts=0028 val=00
+hdaudioC0D0: apple: CS42L83 chip id 0x00000 (not a CS42L83 answer)
+hdaudioC0D0: apple: amp left tweeter  @0x6c: sts=0038 reg00=12
+hdaudioC0D0: apple: amp right tweeter @0x6d: sts=0038 reg00=12
+hdaudioC0D0: apple: amp left woofer   @0x6e: sts=0038 reg00=12
+hdaudioC0D0: apple: amp right woofer  @0x6f: sts=0038 reg00=12
+hdaudioC0D0: apple: I2C scan, each entry is i2c-status/reg00
+hdaudioC0D0: apple: scan 08: 0028/00 0028/00 0028/00 0028/00 0028/00 0028/00 0028/00 0028/00
+hdaudioC0D0: apple: scan 10: 0028/00 0028/00 0028/00 0028/00 0028/00 0028/00 0028/00 0028/00
+hdaudioC0D0: apple: scan 18: 0028/00 0028/00 0028/00 0028/00 0028/00 0028/00 0028/00 0028/00
+hdaudioC0D0: apple: scan 20: 0028/00 0028/00 0028/00 0028/00 0028/00 0028/00 0028/00 0028/00
+hdaudioC0D0: apple: scan 28: 0028/00 0028/00 0028/00 0028/00 0028/00 0028/00 0028/00 0028/00
+hdaudioC0D0: apple: scan 30: 0028/00 0028/00 0028/00 0028/00 0028/00 0028/00 0028/00 0028/00
+hdaudioC0D0: apple: scan 38: 0028/00 0028/00 0028/00 0028/00 0028/00 0028/00 0028/00 0028/00
+hdaudioC0D0: apple: scan 40: 0028/00 0028/00 0028/00 0028/00 0028/00 0028/00 0028/00 0028/00
+hdaudioC0D0: apple: scan 48: 0028/00 0028/00 0028/00 0028/00 0028/00 0028/00 0028/00 0028/00
+hdaudioC0D0: apple: scan 50: 0028/00 0028/00 0028/00 0028/00 0028/00 0028/00 0028/00 0028/00
+hdaudioC0D0: apple: scan 58: 0028/00 0028/00 0028/00 0028/00 0028/00 0028/00 0028/00 0028/00
+hdaudioC0D0: apple: scan 60: 0028/00 0028/00 0028/00 0028/00 0028/00 0028/00 0028/00 0028/00
+hdaudioC0D0: apple: scan 68: 0028/00 0028/00 0028/00 0028/00 0038/12 0038/12 0038/12 0038/12
+hdaudioC0D0: apple: scan 70: 0028/00 0028/00 0028/00 0028/00 0028/00 0028/00 0028/00 0028/00
+hdaudioC0D0: apple: init #1: 0 coef, 0 CS42L83, 0 amp writes
+hdaudioC0D0: apple: init #2: 0 coef, 0 CS42L83, 0 amp writes
+
+== Playback devices
+card 0: PCH [HDA Intel PCH], device 0: CS8409/CS42L83 Analog [CS8409/CS42L83 Analog]
+card 1: HDMI [HDA ATI HDMI], device 3: HDMI 0 [HDMI 0]
+card 1: HDMI [HDA ATI HDMI], device 7: HDMI 1 [HDMI 1]
+card 1: HDMI [HDA ATI HDMI], device 8: HDMI 2 [HDMI 2]
+card 1: HDMI [HDA ATI HDMI], device 9: HDMI 3 [HDMI 3]
+card 1: HDMI [HDA ATI HDMI], device 10: HDMI 4 [HDMI 4]
+card 1: HDMI [HDA ATI HDMI], device 11: HDMI 5 [HDMI 5]
