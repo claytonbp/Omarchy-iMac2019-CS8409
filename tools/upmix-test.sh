@@ -66,7 +66,8 @@ EOF
 echo
 echo "Playing a quiet STEREO test: a low hum (150 Hz), then a high tone (3 kHz)."
 echo "Listen: the low hum should come clearly from the woofers."
-parec -d "$SINK.monitor" --channels=4 --format=s16le --rate=44100 > "$WORK/cap.raw" &
+parec -d "$SINK.monitor" --channels=4 --channel-map=front-left,front-right,rear-left,rear-right \
+	--format=s16le --rate=44100 > "$WORK/cap.raw" &
 REC=$!
 sleep 0.5
 ( sleep 1; cat /proc/asound/card0/pcm0p/sub0/hw_params > "$WORK/hw.txt" 2>/dev/null ) &
