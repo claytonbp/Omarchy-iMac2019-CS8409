@@ -8,6 +8,7 @@ Nothing here survives a reboot.
 | `check.sh` | Codec name, module file in use, DKMS status, this boot's driver log, playback devices | No |
 | `tone-test.sh` | Quiet (−36 dBFS) 440 Hz beep on each of the 4 channels in turn, straight to the CS8409 | Turns HDA power-saving off; optional `DEV_CFG2` value as an argument |
 | `capture.sh <label>` | Records CS8409 registers, GPIOs, converter/pin state and all 4 amps' registers, idle and while a tone plays → `~/capture-<label>.txt` | Power-saving off; I2C reads only |
+| `upmix-test.sh` | Run as your normal user (no `sudo`). Installs the PipeWire upmix setting, switches the card to its 4-channel profile, plays a stereo test and measures the level PipeWire sends to each of the 4 channels (PASS/FAIL). Not yet confirmed on the iMac. | No (changes your PipeWire settings and default output) |
 | `switches.sh [name=value ...]` | Shows or changes the live speaker-start switches | Changes module options until reboot |
 | `amp-test.sh`, `tdm-test.sh` | Experiments from the investigation that write amp volume and the TDM set-up from user space via `hda-verb`. Kept for reference; the driver does this properly now. | **Yes** |
 
