@@ -195,13 +195,18 @@ too, plays a stereo test and measures each channel. Expected: hardware `rate: 44
 `channels: 4`; tweeters around −35 dB and woofers about **3 dB lower** (PipeWire's upmix
 copies to the rear at −3 dB); then `PASS`.
 
-**After a reboot**, play something that's usually 48 kHz (a YouTube video), then run:
+**After a reboot**, start something that's usually 48 kHz (a YouTube video), and **while it's
+playing** run:
 
 ```bash
-cat /proc/asound/card0/pcm0p/sub0/hw_params | grep -E 'rate|channels'
+cat /proc/asound/card0/pcm0p/sub0/hw_params
 ```
 
-It should show `channels: 4` and `rate: 44100 (44100/1)`. If it shows `48000`, PipeWire
+It should show `channels: 4` and `rate: 44100 (44100/1)`. If it only says `closed`, the
+speakers weren't open at that moment: PipeWire closes the device a few seconds after sound
+stops, so make sure the video is playing and try again. If it still says `closed` while you
+can hear sound, PipeWire is sending it elsewhere: check `pactl get-default-sink` shows
+`alsa_output.pci-0000_00_1f.3.analog-surround-40`. If it shows `48000`, PipeWire
 didn't pick up `~/.config/pipewire/pipewire.conf.d/50-imac-rate.conf`: check the file is
 there, then restart PipeWire. As a quick test, `pw-metadata -n settings 0 clock.force-rate 44100`
 forces the rate until PipeWire restarts.
