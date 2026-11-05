@@ -22,6 +22,15 @@ The three hooks in the stock files are:
 - A `CS8409_APPLE` fixup ID and model name `apple`.
 - `#include "cs8409_apple.c"` in `cs8409.c`, so the Apple code can use the static I2C helpers.
 
+## Supported kernels
+
+`dkms.conf` sets `BUILD_EXCLUSIVE_KERNEL="^7\.[23]([.-]|$)"`: DKMS builds only for 7.2.x and
+7.3.x. The private headers bundled here are from 7.2.15. They're unchanged in 7.3.1 apart
+from a new helper function in `hda_local.h` and a changed `snd_hda_get_pin_label()`
+prototype in `hda_auto_parser.h`, which this driver doesn't call; the CS8409 files are
+identical. On other kernels DKMS skips the build (exit 77) and the stock driver loads. To
+move to a newer kernel, see [INSTALL.md, Kernel updates](../INSTALL.md#kernel-updates).
+
 ## Build
 
 ```bash

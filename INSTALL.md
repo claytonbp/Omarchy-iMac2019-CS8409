@@ -3,12 +3,35 @@
 For an **iMac19,1 (Retina 5K, 27-inch, 2019)**. Each step says what you should see, so you
 can tell straight away if something is off.
 
+## Before you wipe the iMac
+
+Nothing in this repository needs the old system: the driver and settings are all here. Two
+things are worth saving first, because they can't be published and can't be downloaded
+later:
+
+- **Wi-Fi firmware.** The BCM4364 Wi-Fi firmware comes from this iMac, not from the
+  internet. Follow the "before you reinstall" parts of the
+  [Wi-Fi guide](https://github.com/claytonbp/omarchy-imac2019-bcm4364) first.
+- **Apple's speaker tuning files, if macOS is still on the iMac and the reinstall will erase
+  it.** They're needed for the planned Apple-style crossover/EQ, not for anything in this
+  guide. In macOS Terminal:
+  ```bash
+  mkdir -p ~/Desktop/imac-audio-apple && cd ~/Desktop/imac-audio-apple
+  R=/System/Library/Extensions/AppleHDA.kext/Contents/Resources
+  cp "$R/layout16.xml.zlib" "$R/Platforms.xml.zlib" .
+  ioreg -lw0 > ioreg-full.txt
+  ls -l
+  ```
+  Copy the folder to a USB stick or cloud storage. These are Apple's files: keep them
+  private, don't add them to GitHub. If `cp` can't find a file, list the folder with
+  `ls "$R" | grep -iE 'layout16|platforms'`.
+
 ## 0. Before you start
 
 - **Install Omarchy** as normal.
-- **You need an internet connection.** The iMac's Broadcom BCM4364 Wi-Fi doesn't work
-  out of the box on Linux, so use Ethernet or USB tethering from a phone until Wi-Fi is set
-  up. Wi-Fi isn't covered here.
+- **You need an internet connection** for step 3 (it installs packages). Use the iMac's
+  Ethernet port, USB tethering from a phone, or Wi-Fi once it's set up with the
+  [Wi-Fi guide](https://github.com/claytonbp/omarchy-imac2019-bcm4364).
 - **Update first and reboot**, so the running kernel and its headers match:
   ```bash
   sudo pacman -Syu
@@ -22,7 +45,9 @@ uname -r
 cat /proc/asound/card*/codec#0 | grep -E 'Codec|Subsystem'
 ```
 
-You should see a kernel ending in `-omarchy`, and:
+You should see a kernel ending in `-omarchy` and starting with **7.2** (tested on this iMac)
+or **7.3** (build-checked, not yet tested on the iMac). For anything newer, read
+[Kernel updates](#kernel-updates) first: `install.sh` will stop on it. You should also see:
 
 ```
 Codec: Cirrus Logic CS8409
@@ -47,14 +72,16 @@ cd Omarchy-iMac2019-CS8409
 sudo ./install.sh
 ```
 
-This does four things:
+This does five things:
 
-1. Installs `base-devel`, `dkms`, `git`, `alsa-utils`, `alsa-tools`, `python` and the
-   headers for your running kernel (for Omarchy's kernel that's `linux-omarchy-headers`).
-2. Builds the driver and installs it through **DKMS** as `cs8409-apple/0.9`, so it's rebuilt
-   automatically after every kernel update.
-3. Installs `/etc/modprobe.d/cs8409-apple.conf`.
-4. Tells you to reboot.
+1. Checks for the iMac's CS8409 codec, and that the kernel is a 7.2 or 7.3 one.
+2. Installs `base-devel`, `dkms`, `git`, `alsa-utils`, `alsa-tools`, `python`, `libpulse`
+   and the headers for your running kernel (for Omarchy's kernel that's
+   `linux-omarchy-headers`).
+3. Builds the driver and installs it through **DKMS** as `cs8409-apple/0.9`, so it's rebuilt
+   automatically after every kernel update, and checks that DKMS reports it `installed`.
+4. Installs `/etc/modprobe.d/cs8409-apple.conf`.
+5. Tells you to reboot.
 
 At the end you should see lines like:
 
@@ -63,14 +90,15 @@ Installing /usr/lib/modules/7.2.15-1-omarchy/updates/dkms/snd-hda-codec-cs8409.k
 Running depmod.... done.
 ```
 
-You may see `Deprecated feature` or module-signing messages from DKMS; they're harmless.
+DKMS may also print module-signing messages the first time (it creates its own signing
+key). They're harmless.
 
 <details>
 <summary>Doing step 3 by hand instead</summary>
 
 ```bash
 pacman -Qqo /usr/lib/modules/$(uname -r)/vmlinuz      # e.g. linux-omarchy
-sudo pacman -S --needed base-devel dkms alsa-utils alsa-tools python linux-omarchy-headers
+sudo pacman -S --needed base-devel dkms alsa-utils alsa-tools python libpulse linux-omarchy-headers
 cd driver
 make                  # test build only
 sudo make install     # install via DKMS
@@ -92,8 +120,8 @@ The driver is loaded at boot. Until you reboot, the stock driver is still runnin
 You should see:
 
 - `Codec: Cirrus Logic CS8409/CS42L83` (the new name shows the Apple path is active)
-- `Module file in use: .../updates/dkms/...`
-- `cs8409-apple/0.9 ... installed`
+- under "Module file in use": `/lib/modules/<kernel>/updates/dkms/snd-hda-codec-cs8409.ko.zst`
+- under "DKMS": `cs8409-apple/0.9, <kernel>, x86_64: installed`, and no WARNING line
 - in the log:
   - `apple: Apple path selected (codec SSID 0x106b1000)`
   - `apple: CS42L83 reset released on gpio1: answering at 0x48`
@@ -122,9 +150,16 @@ This plays a quiet beep on each of the four channels in turn:
 The woofers sound louder because the test note (440 Hz) is low for a tweeter. If you hear
 nothing, see [Troubleshooting](#troubleshooting).
 
+The test scripts assume the iMac's analog card is **card 0**. It was on this machine
+(`check.sh` lists `card 0: PCH [HDA Intel PCH]`). If yours shows the PCH card as card 1,
+the scripts will report errors instead of playing.
+
 ## 7. Everyday sound: 44.1 kHz and all four speakers
 
-Tested on this machine: YouTube and a measured stereo test through PipeWire.
+Tested on this machine, live: 44.1 kHz cured the distortion on YouTube, and a measured
+stereo test reached all four channels. The settings below make both permanent. Whether
+they survive a reboot hadn't been confirmed when this was written, so do the check at the
+end of this step after your first reboot.
 
 Run these as your **normal user** (not with `sudo`). They need two PipeWire settings:
 
@@ -158,8 +193,18 @@ If `pactl` says the profile name doesn't exist, list the real names with
 **Check it** with `bash tools/upmix-test.sh` (normal user). It installs the upmix setting
 too, plays a stereo test and measures each channel. Expected: hardware `rate: 44100`,
 `channels: 4`; tweeters around −35 dB and woofers about **3 dB lower** (PipeWire's upmix
-copies to the rear at −3 dB); then `PASS`. While music plays,
-`cat /proc/asound/card0/pcm0p/sub0/hw_params` should show `rate: 44100`.
+copies to the rear at −3 dB); then `PASS`.
+
+**After a reboot**, play something that's usually 48 kHz (a YouTube video), then run:
+
+```bash
+cat /proc/asound/card0/pcm0p/sub0/hw_params | grep -E 'rate|channels'
+```
+
+It should show `channels: 4` and `rate: 44100 (44100/1)`. If it shows `48000`, PipeWire
+didn't pick up `~/.config/pipewire/pipewire.conf.d/50-imac-rate.conf`: check the file is
+there, then restart PipeWire. As a quick test, `pw-metadata -n settings 0 clock.force-rate 44100`
+forces the rate until PipeWire restarts.
 
 This drives the tweeters and woofers with the same full-range signal, and the woofers sit
 3 dB lower. Apple also splits the sound between them (a crossover) and adds EQ; recreating
@@ -171,19 +216,34 @@ straight to the raw `hw:0,0` / `plughw:0,0` device: it has no volume control.
 
 ## Kernel updates
 
-DKMS rebuilds the driver for every new kernel. Check after an update with
-`dkms status cs8409-apple`, which should list the new kernel as `installed`.
+DKMS rebuilds the driver for every new kernel. After an update and reboot, `./tools/check.sh`
+prints a WARNING if the driver isn't installed for the running kernel.
 
-The driver source is from Linux 7.2.15. It normally builds on later 7.2.x kernels. If a
-DKMS build ever fails on a newer kernel:
+| Kernel | Status |
+|---|---|
+| 7.2.x | **Tested** on this iMac (7.2.15) |
+| 7.3.x | **Build-checked** against 7.3.1: the CS8409 files are identical and the bundled private headers are compatible. Not yet tested on the iMac. |
+| 7.4 and later | **Not checked.** DKMS deliberately skips the build (`BUILD_EXCLUSIVE_KERNEL` in `driver/dkms.conf`), so the stock driver loads and the speakers go silent until the driver is updated. |
 
-1. Download that kernel's source from kernel.org.
+Why the limit: the driver bundles copies of a few private kernel headers
+(`driver/src/common/`, `driver/src/codecs/`). If a new kernel changed the structures in them,
+a module built with the old copies could compile fine and still misbehave. Refusing to build
+is the safe failure.
+
+To update the driver for a newer kernel:
+
+1. Download that kernel's source from kernel.org and unpack it.
 2. Copy its `sound/hda/codecs/cirrus/cs8409.c`, `cs8409.h` and `cs8409-tables.c` into
-   `driver/src/codecs/cirrus/`, and the private headers listed in
-   [`driver/README.md`](driver/README.md) into place.
-3. Re-apply the three small hooks with `patch -p5 < ../../../apple-changes.patch` from inside
-   `driver/src/codecs/cirrus/` (or edit them in by hand).
-4. Run `sudo make install` in `driver/`.
+   `driver/src/codecs/cirrus/`, and its private headers into place, replacing the old copies:
+   `sound/hda/common/hda_local.h`, `hda_auto_parser.h`, `hda_jack.h` → `driver/src/common/`;
+   `sound/hda/codecs/generic.h` → `driver/src/codecs/`;
+   `sound/hda/codecs/side-codecs/hda_component.h` → `driver/src/codecs/side-codecs/`.
+3. Re-apply the three small hooks: from inside `driver/src/codecs/cirrus/`, run
+   `patch -p5 < ../../../apple-changes.patch` (or edit them in by hand).
+4. Widen the pattern in `driver/dkms.conf` (`BUILD_EXCLUSIVE_KERNEL`) and the matching check
+   in `install.sh` to include the new version.
+5. Run `make` in `driver/` to test-build, then `sudo make install`, reboot, and run
+   `./tools/check.sh` and `sudo ./tools/tone-test.sh`.
 
 ## Removing the driver
 
@@ -191,14 +251,25 @@ DKMS build ever fails on a newer kernel:
 sudo ./install.sh --remove
 ```
 
-Then reboot. The stock driver comes back.
+Then reboot. The stock driver comes back. To remove the PipeWire settings from step 7 too
+(as your normal user):
+
+```bash
+rm -f ~/.config/pipewire/pipewire.conf.d/50-imac-rate.conf \
+      ~/.config/pipewire/client.conf.d/50-imac-upmix.conf \
+      ~/.config/pipewire/pipewire-pulse.conf.d/50-imac-upmix.conf
+systemctl --user restart pipewire pipewire-pulse wireplumber
+```
 
 ## Troubleshooting
 
 | Symptom | What to do |
 |---|---|
 | `check.sh` still shows `Codec: Cirrus Logic CS8409` (no `/CS42L83`) | You haven't rebooted since installing, or DKMS didn't build: check `dkms status`. |
-| `dkms status` doesn't list your kernel | The headers were missing when the kernel updated. Install `<kernel-package>-headers`, then run `sudo dkms autoinstall` and reboot. |
+| `install.sh` says the kernel isn't one it has been checked against | Your kernel is newer than 7.3. See [Kernel updates](#kernel-updates). |
+| `check.sh` warns the driver isn't installed for the running kernel | If the kernel is 7.4 or later, see [Kernel updates](#kernel-updates). Otherwise the headers were probably missing when the kernel updated: install `<kernel-package>-headers`, run `sudo dkms autoinstall`, and reboot. |
+| Distorted sound in videos | PipeWire is running at 48 kHz. See the check at the end of [step 7](#7-everyday-sound-441-khz-and-all-four-speakers). |
+| Thin sound, no bass | Only the tweeters are playing: the card is on its stereo profile, or the upmix setting is missing. Redo [step 7](#7-everyday-sound-441-khz-and-all-four-speakers). |
 | `CS42L83 ... no answer` | The reset pin setting didn't apply. Check `cat /sys/module/snd_hda_codec_cs8409/parameters/apple_cs42l83_reset_gpio` prints `1`. |
 | `I2C bus LOST` in the log | Send the log upstream; the driver tries to recover by itself. |
 | `tone-test.sh` says the device is busy | Stop anything that's playing, then try again. |

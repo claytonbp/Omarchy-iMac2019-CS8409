@@ -75,9 +75,14 @@ converter sync), which a script beside `aplay` can't time correctly.
 
 - Filled the init tables and a playback hook with the measured values; switched back to the
   own driver.
-- **Finding:** a capture while playing matched the reference **register for register**
-  (every CS8409 coef, including the unknown `6b`/`6d`/`6e`, and all 32 registers of each amp),
-  but it was still silent. So the order of operations matters, not just the final values.
+- **Finding:** a capture while playing matched the reference in every audio-path setting
+  (all 32 registers of each amp, the clocks, the four slots, the unknown `6b`/`6d`/`6e`), but
+  it was still silent. So the order of operations matters, not just the final values.
+- At the time this was described as a match "register for register". The final check (below)
+  found that was too strong: CS8409 coef `09` (`0013` vs `0093`) and the I2C bus-speed
+  register `5b` (`0200` vs `0010`) also differed, besides the GPIO and headphone-pin
+  differences that became v0.8 switches. v0.8 plays with both still different, so neither is
+  needed for sound.
 - Log: [`logs/05-capture-own-driver-v0.7-silent.txt`](../logs/05-capture-own-driver-v0.7-silent.txt)
 
 ## v0.8: macOS's order → sound
@@ -110,6 +115,37 @@ Four differences remained, each added as a live switch, defaulting to the refere
 - A measurement pitfall: `parec --channels=4` without `--channel-map` records PulseAudio's
   default 4-channel layout (FL, FC, FR, RC), not FL/FR/RL/RR. That briefly made a working set-up
   look as if the right tweeter were silent.
+
+## Final check (5 November 2026)
+
+Before the iMac was reinstalled, the repository was cloned fresh from GitHub and checked
+end to end.
+
+**Confirmed:**
+
+- The repository is public: it clones and its files download without logging in.
+- The driver source differs from the v0.8 that was heard working in only the two intended
+  defaults (CS42L83 reset on GPIO1; boot-time register dump off).
+- Stock 7.2.15 plus `apple-changes.patch` reproduces the three edited kernel files exactly.
+  The five bundled headers are byte-identical to 7.2.15.
+- It builds from the clone with no compiler warnings, and every documented option default
+  matches the code.
+- Each expected log line in INSTALL.md is printed, word for word, by the code.
+
+**Found and fixed:**
+
+| Finding | Fix |
+|---|---|
+| Linux 7.3.1 is out, so a fresh install may not get 7.2 | Compared every file the driver depends on with 7.3.1 (only harmless changes) and test-built against it: clean. DKMS now builds only for 7.2.x/7.3.x and skips newer kernels instead of building with out-of-date private headers; `install.sh` checks too. Tested with DKMS: builds on 7.2.15 and 7.3.1, skips 7.4. |
+| GitHub listed the licence as "Other" | `LICENSE` is now the plain GPL-2.0 text, without the kernel's header lines |
+| `install.sh` only looked at the first sound card for the codec | It now checks all cards |
+| `pactl`/`parec` (`libpulse`) weren't installed explicitly | Added to `install.sh` |
+| Nothing confirmed DKMS actually installed the module | `install.sh` checks `dkms status`; `check.sh` warns if the running kernel has no build |
+| The "44.1 kHz" setting had been tested live, not across a reboot | INSTALL.md says so and adds a check after the first reboot |
+| Wi-Fi firmware and Apple's tuning files would be lost in a full wipe | "Before you wipe the iMac" section in INSTALL.md |
+| The v0.7 "register for register" claim was too strong | Corrected above and in the transcript |
+| The transcript claimed replies were "as given" and had one reply wrong and several messages missing | Marked as a condensed record, the wrong reply restored, every message included |
+| `tools/README.md` said nothing survives a reboot | `upmix-test.sh` installs PipeWire settings; now stated |
 
 ## Still to do
 

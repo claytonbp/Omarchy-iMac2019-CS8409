@@ -1,7 +1,9 @@
 # Tools
 
 All scripts work with the driver installed. Those that need `sudo` say so when you run them.
-Nothing here survives a reboot.
+Changes made by the scripts last until the next reboot, except `upmix-test.sh`, which installs
+PipeWire settings in your home folder (that's its job). All scripts assume the iMac's analog
+card is card 0, as `aplay -l` showed on this machine.
 
 | Script | What it does | Writes to hardware? |
 |---|---|---|

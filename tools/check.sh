@@ -6,6 +6,10 @@ echo; echo "== Module file in use (want: .../updates/dkms/...)"
 modinfo -F filename snd_hda_codec_cs8409
 echo; echo "== DKMS"
 dkms status cs8409-apple
+if ! dkms status cs8409-apple -k "$(uname -r)" 2>/dev/null | grep ': installed' >/dev/null; then
+	echo "WARNING: cs8409-apple is not installed for the running kernel $(uname -r)."
+	echo "         See INSTALL.md, \"Kernel updates\" and \"Troubleshooting\"."
+fi
 echo; echo "== Driver log for this boot"
 journalctl -k -b --no-pager | grep -E 'apple:|cs8409' | sed 's/^.*snd_hda_codec_cs8409 //'
 echo; echo "== Playback devices"

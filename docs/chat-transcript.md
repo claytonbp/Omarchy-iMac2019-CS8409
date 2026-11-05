@@ -1,18 +1,23 @@
 # Chat transcript
 
 The conversation in which this driver was built, between the iMac's owner and Claude
-(Anthropic), 1–4 November 2026, in a claude.ai project called "Apple-Linux".
+(Anthropic), 1–5 November 2026, in a claude.ai project called "Apple-Linux".
 
-Editing notes:
+This is a **condensed record**, not a verbatim export. Editing notes:
 
-- Messages are given in order. Claude's tool use (web searches, reading files, building and
-  test-compiling the driver) is summarised in *italics* instead of being reproduced.
+- Every message is given, in order. The owner's own words are quoted as written.
+- **Claude's replies are condensed**: the findings, tables, commands and decisions are kept,
+  but longer replies are shortened, and some passages are summarised in *(brackets)*.
+- Claude's tool use (web searches, reading files, building and test-compiling the driver)
+  is summarised in *italics* instead of being reproduced.
 - Long terminal output pasted by the owner is shortened to the lines that matter. Where the
   full output was attached as a file, it's in [`../logs/`](../logs/).
+- Where Claude said something later found to be wrong, it's left as said, with a
+  **[Correction: …]** note.
 - The Mac's serial number and hardware UUID have been left out. They appeared only in the
   raw macOS system report, which isn't reproduced here.
-- Claude's replies are as given. File names like `cs8409-apple-0.6.tar.gz` were
-  intermediate versions; the final source is in [`../driver/`](../driver/).
+- File names like `cs8409-apple-0.6.tar.gz` were intermediate versions; the final source is
+  in [`../driver/`](../driver/).
 
 ---
 
@@ -406,21 +411,28 @@ For each run, did any beeps come out?
 **Owner:** I did not hear beeps or clicks
 
 *Claude cloned davidjo/snd_hda_macbookpro and read its notes from macOS traces of the
-TAS5764L set-up.*
+TAS5764L set-up. They give amp register `0x04` as the volume (`0xcf` = 0 dB, 0.5 dB steps),
+so the firmware's `0x5c` is about −57 dB. Claude wrote `amp-test.sh` around that.*
 
 **Claude:**
 
-Silence on both runs fits something I've just found. davidjo's driver contains notes decoded
-from macOS traces of these same amps:
+The new script is in **cs8409-apple-0.6.1.tar.gz**. It only adds `amp-test.sh` and tidies
+`tone-test.sh`. The driver itself is unchanged, so there's nothing to reinstall and no
+reboot needed.
 
-| Amp register | Your amps | What macOS writes when playing | Meaning |
-|---|---|---|---|
-| `0x01` | `fd` | `fd` | Power: awake, amp on. Already fine. |
-| `0x04` | **`5c`** | `cf` | **Volume.** `cf` = 0 dB, so yours is about **−57 dB**. |
-| `0x06` | `51` | `55` | Analog gain |
+`amp-test.sh` works in three steps:
 
-A −36 dB beep through an amp at −57 dB is far too quiet to hear. `amp-test.sh` raises only
-the volume register, switches the CS8409 ports on and plays the beeps.
+1. It shows each amp's main registers, then sets **only the volume register (`0x04`)** on
+   all four amps.
+2. It switches on the CS8409's ports, as `0x62` did before.
+3. It plays the same four quiet beeps.
+
+Everything is undone by a reboot. I've capped the volume at `0xbf` (about −8 dB) for now.
+Combined with the −36 dB beep, that stays well below anything loud. *(Start with
+`sudo ./amp-test.sh`, then `0xaf`, then `0xbf`.)* Please also paste the "Amps before / Amps
+after" tables from the first run. The register meanings come from davidjo's notes on macOS
+traces, not from a TI datasheet, so this run also tells us whether those notes hold for
+your iMac.
 
 ---
 
@@ -516,20 +528,32 @@ restore `cs8409-apple.conf`, `sudo make install`, reboot, `tone-test.sh`, and if
 **Claude:**
 
 Your driver now produces **exactly** the same CS8409 and amp register values while playing as
-davidjo's working driver: every coefficient, including the unknown `6b`, `6d` and `6e`, and
-all 32 registers of each amp. So the difference is not *what* gets written but *how and when*.
+davidjo's working driver. Every coefficient matches, including the three unknown ones (`6b`,
+`6d`, `6e`), and all 32 registers of each amp match. So the remaining difference is not
+*what* gets written but *how and when*.
 
-*Claude compared the call order in the macOS-derived play sequence.*
+> **[Correction, 5 Nov:** a line-by-line comparison during the final check showed this wasn't
+> quite right. All four amps were identical, but two CS8409 registers differed: coef `0x09`
+> (`0x0093` reference, `0x0013` own) and the I2C bus-speed register `0x5b` (`0x0010` vs
+> `0x0200`). `0x5a` and `0x5e` (the last I2C data) also differed, which is meaningless.
+> v0.8 plays with `0x09` and `0x5b` still different, so neither is needed for sound. See
+> [`how-it-was-found.md`](how-it-was-found.md).**]**
 
-- **Different sequence:** the working driver switches each amp pair on straight after its
-  slots are configured, and only then runs the converter sync. Ours did the sync first and
-  the amps last.
-- **Side differences:** ours also mirrors the stream to the headphone converter (`0x0a`), and
-  GPIOs 0, 2 and 3 aren't enabled.
-- **Power cycling:** the working driver takes the audio function D3 → D0 around every stream,
-  which resets the CS8409's internal state.
+*Claude compared the call order in davidjo's macOS-derived play sequence with its own and
+built v0.8.*
 
-v0.8 adds all four as switches you can flip live, defaulting to the working driver's behaviour.
+Version 0.8 is ready in **cs8409-apple-0.8.tar.gz** and compiles cleanly. All four
+differences now default to davidjo's behaviour:
+
+| Switch | Default | What it does at stream start |
+|---|---|---|
+| `apple_spk_order` | `1` | macOS order: tweeter slots, tweeters on, woofer slots, woofers on, then the converter sync |
+| `apple_afg_cycle` | on | Powers the audio function D3 → D0, then reprograms the converters, as davidjo's driver does around every stream |
+| `apple_hp_off` | on | Keeps the speaker stream off the headphone converter and pin |
+| `apple_gpio_inputs` | on | Enables GPIOs 0, 2 and 3 as inputs |
+
+*(Install, reboot, `sudo ./tone-test.sh`. If you hear beeps, we find which switch mattered
+by turning them off one at a time, live, with `switches.sh`.)*
 
 ---
 
@@ -572,43 +596,123 @@ create an empty one, and whether it should be public or private.*
 boot-time dump off), `install.sh`, the settings, the tools, the documentation, the logs and
 this transcript.*
 
-**Claude:** *(The repository was pushed after the owner installed the Claude GitHub App on it.
-Claude then suggested testing INSTALL.md step 7, the only untested part, before wiping.)*
+**Claude:** *(The package is ready and committed, but this session isn't linked to a GitHub
+account, so it can't push. Download `Omarchy-iMac2019-CS8409.tar.gz` now, and either link
+GitHub to Claude or upload it yourself.)*
+
+**Owner:** I have connected Claude to Github. My username is claytonbp
+
+*Claude attached the repository; GitHub refused the push (HTTP 403).*
+
+**Claude:** GitHub refused the push: Claude doesn't have GitHub access to this repository yet.
+Linking your account was the first half; the second is giving the Claude GitHub App
+permission to write to this repository *(at github.com/apps/claude/installations/select_target,
+choose claytonbp, add Omarchy-iMac2019-CS8409)*. The commit is ready, with your username
+filled into the clone instructions.
+
+**Owner:** Try it now
+
+*Claude pushed, then cloned the repository back and confirmed all 37 files matched.*
+
+**Claude:** It's on GitHub: https://github.com/claytonbp/Omarchy-iMac2019-CS8409. After you
+wipe and reinstall Omarchy, all you need is a network connection, `git clone`, and
+`sudo ./install.sh`. One suggestion before you wipe: step 7 in INSTALL.md (stereo on all four
+speakers) is the only untested part of the package.
 
 **Owner:** can we please test this now?
 
 *Claude wrote `tools/upmix-test.sh`: it installs the upmix setting, switches to the 4-channel
-profile, plays a stereo test, and measures each channel from the sink monitor.*
+profile, plays a stereo test, and measures each channel from the sink monitor. It was pushed
+to the repository, marked not yet confirmed.*
+
+**Claude:** *(Run it as your normal user, not with sudo: `bash ~/Downloads/upmix-test.sh`.
+Listen for the low hum coming clearly from the woofers. Paste the output.)*
 
 **Owner:** I am now testing the audio out on a YouTube video and it sounds distorted. Do I
 need to adjust settings in pipewire?
 
 **Claude:** Probably yes. There are two likely causes: the sample rate (every test so far ran
 at 44.1 kHz, and YouTube usually plays at 48 kHz) or the missing crossover. Turn the volume
-down first, check `hw_params` while the video plays, and if it says 48000, try
-`pw-metadata -n settings 0 clock.force-rate 44100`.
+down to about a third first. Check `hw_params` while the video plays, and if it says 48000,
+try `pw-metadata -n settings 0 clock.force-rate 44100`.
 
-**Owner:** *(`hw_params`: `channels: 4`, `rate: 48000`; the force-rate command accepted)*
+**Owner:**
+
+```
+access: MMAP_INTERLEAVED
+format: S32_LE
+channels: 4
+rate: 48000 (48000/1)
+...
+set property: id:0 key:clock.force-rate value:44100 type:(null)
+```
 
 **Claude:** That confirms it: the speakers were running at 48 kHz. Reload the video and check
 for `rate: 44100`. If the distortion is gone, make it permanent with
-`~/.config/pipewire/pipewire.conf.d/50-imac-rate.conf` (`default.clock.allowed-rates = [ 44100 ]`).
+`~/.config/pipewire/pipewire.conf.d/50-imac-rate.conf` (`default.clock.rate = 44100`,
+`default.clock.allowed-rates = [ 44100 ]`).
 
 **Owner:** Audio is much better, however it sounds flat with not much bass
 
-**Claude:** Good, the rate was the cause. The flat sound is most likely the woofers getting
-nothing: without the upmix, stereo only reaches the tweeters. Run `upmix-test.sh`.
+**Claude:** Good, the rate was the cause. If you haven't yet, create the `50-imac-rate.conf`
+file. The flat sound is most likely the woofers getting nothing: without the upmix, stereo
+only reaches the tweeters. Run `upmix-test.sh`.
 
-**Owner:** *(first run: "FL −35.2, FR −120.0, RL −35.2, RR −30.5 dB, RESULT: PASS")*
+**Owner:** *(first run: profile `output:analog-surround-40+input:analog-stereo`, hardware
+`rate: 44100`, `channels: 4`; "FL −35.2, FR −120.0, RL −35.2, RR −30.5 dB, RESULT: PASS")*
 
 **Claude:** The script printed PASS, but that's my mistake: it only compared the loudest front
-with the loudest rear. I fixed the check. The sink itself was correct (4 channels in order,
-equal volumes), so the problem was the measurement: `parec`'s default 4-channel layout is
-front-left / centre / front-right / rear-centre, which explains the numbers exactly. The
-script now asks for the real layout.
+channel with the loudest rear one. Read per channel, the right tweeter looks silent and the
+right woofer 5 dB louder. *(Claude fixed the check and pushed it.)* Please send the sink's
+channel map and volumes:
+`pactl list sinks | grep -A40 'Name: alsa_output.pci-0000_00_1f.3.analog-surround-40' | grep -E 'Channel Map|Volume:|Mute|balance|Sample Specification'`
 
-**Owner:** *(second run: "FL −35.2, FR −35.2, RL −38.2, RR −38.2 dB")*
+**Owner:**
 
-**Claude:** All four speakers now get the stereo signal. The woofers are 3.0 dB lower, which is
-how PipeWire's simple upmix works (it copies to the rear at −3 dB). Step 7's two settings,
-44.1 kHz and the upmix, are now confirmed and recorded in the repository.
+```
+Sample Specification: s32le 4ch 44100Hz
+Channel Map: front-left,front-right,rear-left,rear-right
+Mute: no
+Volume: front-left: 19660 /  30% / -31.37 dB,   front-right: ... 30% ...,   rear-left: ... 30% ...,   rear-right: ... 30% ...
+        balance 0.00
+```
+
+**Claude:** The sink itself is set up correctly, so PipeWire isn't dropping the right tweeter.
+The fault is in my measurement: the script asked `parec` for "4 channels" without saying
+which, and its default 4-channel layout is front-left / centre / front-right / rear-centre.
+That explains the numbers exactly (the "FR" column was a centre channel that doesn't exist;
+"RR" was both woofers added together). *(Claude fixed the script to request
+FL/FR/RL/RR explicitly and pushed it.)*
+
+**Owner:** *(second run: "FL −35.2, FR −35.2, RL −38.2, RR −38.2 dB, RESULT: UNEVEN")*
+
+**Claude:** That's a good result. All four speakers now get the stereo signal. The woofers are
+3.0 dB lower than the tweeters, which is how PipeWire's simple upmix works (it copies to the
+rear at −3 dB); the script flagged it only because 3.0 dB sat on its 3 dB limit. *(Claude
+added `config/pipewire/50-imac-rate.conf`, marked step 7 as tested, allowed the expected
+3 dB in the script, updated the docs, and pushed.)* How does YouTube sound now?
+
+**Owner:** Yes, even though it does sound flat, there is a fullness in the audio
+
+**Claude:** Good, so the woofers are doing their job. The flatness that remains has two
+causes: the woofers run 3 dB lower (the simple upmix), and none of Apple's processing is
+there yet. For this iMac, macOS applies an input EQ, a crossover (woofers below about
+1.4 kHz, tweeters above about 3 kHz) and loudness and bass processing. The fix is a PipeWire
+filter that sends stereo to the woofers at full level and applies Apple's own settings,
+decoded from `layout16.xml.zlib` on the macOS partition, mounted read-only with `apfs-fuse`.
+It's a longer job, probably several rounds. Start now, or leave it for another session?
+
+---
+
+## 5 November 2026
+
+**Owner:** Before I finish up up with this session, could you please verify everything is
+correct in GitHub for files, instructions, current chat etc.. Please perform a strict
+comprehensive verification so I can use this on a factory reset of Omarchy
+
+*Claude cloned the repository fresh from GitHub and checked it against everything above:
+public access without credentials, the driver source against the v0.8 that was heard
+working, the patch against stock 7.2.15, a clean build, every documented option default, a
+test build against the newer Linux 7.3.1, each instruction against the real logs, every link,
+and this transcript against the conversation. The findings and fixes are listed in
+[`how-it-was-found.md`](how-it-was-found.md#final-check-5-november-2026).*

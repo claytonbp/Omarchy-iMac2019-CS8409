@@ -95,6 +95,8 @@ The register map is 32 bytes and repeats every `0x20`.
 | `6d`, `6e` | `0000` | `0000` | `00ff` | Set during playback |
 | `71` | `0000` | `400f` | `400f` | "TDM in use" flags |
 | `82` pad config | `ff00` | `0000` | `5400` | ASP1 pads on during playback |
+| `09` | `0013` | `0013` | `0013` | Unknown. The reference driver has `0093`; not needed for sound |
+| `5b` I2C config | `0010` | `0200` | `0200` | I2C bus speed. This driver uses Dell's 100 kHz value (`0200`); the reference has `0010`. Both work |
 
 Full dumps are in [`../logs/`](../logs/).
 

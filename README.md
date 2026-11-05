@@ -13,9 +13,15 @@ CS8409 audio bridge, built and tested on one machine, step by step, in November 
 | Suspend / resume | — | not tested yet (the driver re-runs its setup on wake) |
 | Apple's speaker tuning (crossover/EQ) | — | not done yet |
 
-Tested on kernel `7.2.15-1-omarchy` with PipeWire.
+Tested on kernel `7.2.15-1-omarchy` with PipeWire. Build-checked against Linux 7.3.1 (not yet
+run on the iMac). Newer kernels are refused until checked: see
+[INSTALL.md, Kernel updates](INSTALL.md#kernel-updates).
 
 ## Quick start (fresh Omarchy)
+
+Before wiping the iMac, read [Before you wipe the iMac](INSTALL.md#before-you-wipe-the-imac)
+(Wi-Fi firmware, and Apple's tuning files if macOS will be erased). Then, with a network
+connection:
 
 ```bash
 git clone https://github.com/claytonbp/Omarchy-iMac2019-CS8409.git
@@ -24,6 +30,7 @@ sudo ./install.sh
 # reboot
 ./tools/check.sh
 sudo ./tools/tone-test.sh
+# then, as your normal user: INSTALL.md step 7 (44.1 kHz + all four speakers)
 ```
 
 Full step-by-step instructions, including what to check after each step and how to
