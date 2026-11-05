@@ -141,7 +141,7 @@ end to end.
 | `install.sh` only looked at the first sound card for the codec | It now checks all cards |
 | `pactl`/`parec` (`libpulse`) weren't installed explicitly | Added to `install.sh` |
 | Nothing confirmed DKMS actually installed the module | `install.sh` checks `dkms status`; `check.sh` warns if the running kernel has no build |
-| The "44.1 kHz" setting had been tested live, not across a reboot | INSTALL.md says so and adds a check after the first reboot |
+| The "44.1 kHz" setting had been tested live, not across a reboot | Checked after a reboot: a 48 kHz test tone played at `rate: 44100`, `channels: 4`. That test is now the check in INSTALL.md step 7 |
 | Wi-Fi firmware and Apple's tuning files would be lost in a full wipe | "Before you wipe the iMac" section in INSTALL.md |
 | The v0.7 "register for register" claim was too strong | Corrected above and in the transcript |
 | The transcript claimed replies were "as given" and had one reply wrong and several messages missing | Marked as a condensed record, the wrong reply restored, every message included |

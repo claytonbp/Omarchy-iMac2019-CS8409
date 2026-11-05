@@ -156,10 +156,9 @@ the scripts will report errors instead of playing.
 
 ## 7. Everyday sound: 44.1 kHz and all four speakers
 
-Tested on this machine, live: 44.1 kHz cured the distortion on YouTube, and a measured
-stereo test reached all four channels. The settings below make both permanent. Whether
-they survive a reboot hadn't been confirmed when this was written, so do the check at the
-end of this step after your first reboot.
+Tested on this machine: 44.1 kHz cured the distortion on YouTube, a measured stereo test
+reached all four channels, and after a reboot a 48 kHz sound still played at 44.1 kHz on
+4 channels (the check at the end of this step).
 
 Run these as your **normal user** (not with `sudo`). They need two PipeWire settings:
 
@@ -195,18 +194,19 @@ too, plays a stereo test and measures each channel. Expected: hardware `rate: 44
 `channels: 4`; tweeters around −35 dB and woofers about **3 dB lower** (PipeWire's upmix
 copies to the rear at −3 dB); then `PASS`.
 
-**After a reboot**, start something that's usually 48 kHz (a YouTube video), and **while it's
-playing** run:
+**After a reboot**, check both settings stuck. This plays a quiet 4-second 48 kHz tone (the
+rate YouTube uses) through PipeWire and reads the speakers' state halfway through:
 
 ```bash
-cat /proc/asound/card0/pcm0p/sub0/hw_params
+python3 -c "import math,struct,wave;w=wave.open('/tmp/t48.wav','wb');w.setnchannels(2);w.setsampwidth(2);w.setframerate(48000);w.writeframes(b''.join(struct.pack('<hh',v,v) for v in (int(1000*math.sin(2*math.pi*440*i/48000)) for i in range(48000*4))));w.close()"
+paplay /tmp/t48.wav & sleep 2; cat /proc/asound/card0/pcm0p/sub0/hw_params; wait
 ```
 
-It should show `channels: 4` and `rate: 44100 (44100/1)`. If it only says `closed`, the
-speakers weren't open at that moment: PipeWire closes the device a few seconds after sound
-stops, so make sure the video is playing and try again. If it still says `closed` while you
-can hear sound, PipeWire is sending it elsewhere: check `pactl get-default-sink` shows
-`alsa_output.pci-0000_00_1f.3.analog-surround-40`. If it shows `48000`, PipeWire
+It should show `channels: 4` and `rate: 44100 (44100/1)`, as it did on this iMac. (If you
+read that file yourself at some other time and it only says `closed`, nothing was playing at
+that moment: PipeWire closes the device a few seconds after sound stops.) If it still says
+`closed` during the tone, PipeWire is sending sound elsewhere: check `pactl get-default-sink`
+shows `alsa_output.pci-0000_00_1f.3.analog-surround-40`. If it shows `48000`, PipeWire
 didn't pick up `~/.config/pipewire/pipewire.conf.d/50-imac-rate.conf`: check the file is
 there, then restart PipeWire. As a quick test, `pw-metadata -n settings 0 clock.force-rate 44100`
 forces the rate until PipeWire restarts.

@@ -7,7 +7,7 @@ CS8409 audio bridge, built and tested on one machine, step by step, in November 
 | | Out of the box | With this driver |
 |---|---|---|
 | Internal speakers (4) | silent: the stock driver never sets up the amplifiers | **working** |
-| Everyday stereo (YouTube, music) | — | **working**: PipeWire at 44.1 kHz + 4-channel upmix ([INSTALL.md step 7](INSTALL.md#7-everyday-sound-441-khz-and-all-four-speakers)) |
+| Everyday stereo (YouTube, music) | — | **working**, also after a reboot: PipeWire at 44.1 kHz + 4-channel upmix ([INSTALL.md step 7](INSTALL.md#7-everyday-sound-441-khz-and-all-four-speakers)) |
 | Headphone jack | silent | not done yet |
 | Internal / headset microphone | not working | not done yet |
 | Suspend / resume | — | not tested yet (the driver re-runs its setup on wake) |

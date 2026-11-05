@@ -716,3 +716,37 @@ working, the patch against stock 7.2.15, a clean build, every documented option 
 test build against the newer Linux 7.3.1, each instruction against the real logs, every link,
 and this transcript against the conversation. The findings and fixes are listed in
 [`how-it-was-found.md`](how-it-was-found.md#final-check-5-november-2026).*
+
+**Claude:** *(Summary of the check, findings and fixes, and three things to do before
+wiping: confirm the 44.1 kHz setting survives a reboot, save the Wi-Fi firmware, and save
+Apple's tuning files if macOS will be erased.)*
+
+**Owner:** ran the bash command, however it did not show me anything
+
+**Claude:** Nothing printed probably means the speakers weren't in use at that moment. When
+nothing is playing, PipeWire closes the device, and that file then contains only `closed`,
+which the `grep` filtered out. *(Claude fixed the check in INSTALL.md and asked for the file,
+the default sink and the PipeWire settings folder while a video played.)*
+
+**Owner:**
+
+```
+closed
+alsa_output.pci-0000_00_1f.3.analog-surround-40
+.rw-r--r--   180 claytonbp  4 Nov 20:50  50-imac-rate.conf
+```
+
+**Claude:** Two of the three are right: the 4-channel output survived the reboot, and the
+44.1 kHz file is there. `closed` just means nothing was playing at that exact moment. To take
+timing out of it, play a quiet 48 kHz test tone through PipeWire and read the state halfway
+through *(the command now in INSTALL.md step 7)*.
+
+**Owner:**
+
+```
+channels: 4
+rate: 44100 (44100/1)
+```
+
+**Claude:** PipeWire took a 48 kHz sound, converted it to 44.1 kHz and sent it to all four
+channels, after a reboot. The setting persists, so the last open item is confirmed.
