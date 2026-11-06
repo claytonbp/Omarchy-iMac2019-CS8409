@@ -750,3 +750,24 @@ rate: 44100 (44100/1)
 
 **Claude:** PipeWire took a 48 kHz sound, converted it to 44.1 kHz and sent it to all four
 channels, after a reboot. The setting persists, so the last open item is confirmed.
+
+**Claude:** *(Recorded the reboot result in the repository; INSTALL.md step 7 now uses the
+48 kHz test tone as its check. Before wiping: save the Wi-Fi firmware, and Apple's tuning
+files if macOS will be erased.)*
+
+---
+
+## 6 November 2026
+
+**Owner:** Before I finish up up with this session, could you please verify everything is
+correct on the USB > CS8409 for files, instructions, current chat etc.. Please perform a
+strict comprehensive verification so I can use this on a factory reset of Omarchy
+
+*Claude couldn't reach the owner's computer (it wasn't linked to the session), so it couldn't
+read the stick directly. It found that a USB copy needed two changes. exFAT sticks can't store
+executable flags, and `install.sh`'s final `chmod` would have stopped the script there. A copy
+also had no way to prove it was complete. Claude added `SHA256SUMS` (a checksum for every
+file), made `install.sh` exFAT-safe, and added "Making a USB copy" and install-from-USB steps
+to INSTALL.md. It tested those commands verbatim from GitHub against a simulated stick with
+all executable flags stripped: the copy verified, the flags were restored, and a damaged and
+a missing file were both caught by name.*
