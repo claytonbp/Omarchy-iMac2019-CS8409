@@ -59,7 +59,8 @@ dkms status cs8409-apple -k "$kver" | grep ': installed' >/dev/null \
 install -m 0644 config/modprobe.d/cs8409-apple.conf /etc/modprobe.d/cs8409-apple.conf
 echo "Installed /etc/modprobe.d/cs8409-apple.conf"
 
-chmod +x tools/*.sh
+# (fails harmlessly on an exFAT USB stick, which can't store executable flags)
+chmod +x tools/*.sh 2>/dev/null || true
 echo
 echo "Done. Now reboot, then run:"
 echo "  ./tools/check.sh          # should show Codec: Cirrus Logic CS8409/CS42L83"

@@ -26,6 +26,21 @@ later:
   private, don't add them to GitHub. If `cp` can't find a file, list the folder with
   `ls "$R" | grep -iE 'layout16|platforms'`.
 
+### Making a USB copy
+
+Optional, as everything is on GitHub, but useful to have with the Wi-Fi files. With the
+stick mounted (for example as in the Wi-Fi guide, at `/mnt/usb`) and a network connection:
+
+```bash
+U=/mnt/usb/CS8409            # where the copy goes on the stick
+rm -rf /tmp/cs8409-usb && git clone -q --depth 1 https://github.com/claytonbp/Omarchy-iMac2019-CS8409.git /tmp/cs8409-usb && rm -rf /tmp/cs8409-usb/.git
+rm -rf "$U" && mkdir -p "$U" && cp -r /tmp/cs8409-usb/. "$U"/ && sync
+(cd "$U" && sha256sum -c --quiet SHA256SUMS && echo "USB COPY OK")
+```
+
+This replaces any older `CS8409` folder on the stick, so the copy matches GitHub exactly.
+`SHA256SUMS` lists a checksum for every file, so the copy can be checked again later, offline.
+
 ## 0. Before you start
 
 - **Install Omarchy** as normal.
@@ -65,6 +80,21 @@ sudo pacman -S --needed git
 git clone https://github.com/claytonbp/Omarchy-iMac2019-CS8409.git
 cd Omarchy-iMac2019-CS8409
 ```
+
+**Or from your USB copy** (see [Making a USB copy](#making-a-usb-copy)). Don't run it from
+the stick: exFAT sticks can't store the "executable" flag, so scripts there give
+"Permission denied". Copy it to your home folder, check it, and restore the flags:
+
+```bash
+U=/mnt/usb/CS8409            # the CS8409 folder on your stick
+cp -r "$U" ~/Omarchy-iMac2019-CS8409
+cd ~/Omarchy-iMac2019-CS8409
+sha256sum -c --quiet SHA256SUMS && echo "COPY OK"
+chmod +x install.sh tools/*.sh
+```
+
+`COPY OK` means every file is present and undamaged. Any `FAILED` line names a file that's
+missing or different. Step 3 still needs an internet connection, because it installs packages.
 
 ## 3. Install
 

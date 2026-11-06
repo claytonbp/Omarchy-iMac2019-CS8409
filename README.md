@@ -49,6 +49,7 @@ set up PipeWire for everyday listening (44.1 kHz, all four speakers): **[INSTALL
 | [`docs/how-it-was-found.md`](docs/how-it-was-found.md) | How the driver was worked out, version by version |
 | [`docs/chat-transcript.md`](docs/chat-transcript.md) | The full conversation in which this was built |
 | [`logs/`](logs/) | Raw diagnostic output and register captures from the machine |
+| [`SHA256SUMS`](SHA256SUMS) | Checksums of every file, to check a copy (e.g. on a USB stick): `sha256sum -c --quiet SHA256SUMS`. Regenerated with every change. |
 
 ## How it works, briefly
 
