@@ -29,16 +29,20 @@ later:
 ### Making a USB copy
 
 Optional, as everything is on GitHub, but useful to have with the Wi-Fi files. With the
-stick mounted (for example as in the Wi-Fi guide, at `/mnt/usb`) and a network connection:
+stick plugged in and a network connection, find where it's mounted with
+`lsblk -o NAME,SIZE,FSTYPE,LABEL,MOUNTPOINTS` (Omarchy usually mounts it under
+`/run/media/<you>/<stick label>`), then:
 
 ```bash
-U=/mnt/usb/CS8409            # where the copy goes on the stick
+S=/run/media/$USER/YOUR_STICK            # the stick's mount point from lsblk
+U="$S/CS8409/Omarchy-iMac2019-CS8409"   # the copy gets its own folder
 rm -rf /tmp/cs8409-usb && git clone -q --depth 1 https://github.com/claytonbp/Omarchy-iMac2019-CS8409.git /tmp/cs8409-usb && rm -rf /tmp/cs8409-usb/.git
 rm -rf "$U" && mkdir -p "$U" && cp -r /tmp/cs8409-usb/. "$U"/ && sync
 (cd "$U" && sha256sum -c --quiet SHA256SUMS && echo "USB COPY OK")
 ```
 
-This replaces any older `CS8409` folder on the stick, so the copy matches GitHub exactly.
+This replaces only the `Omarchy-iMac2019-CS8409` folder, so the copy matches GitHub exactly;
+anything else on the stick, including other files in `CS8409`, is left alone.
 `SHA256SUMS` lists a checksum for every file, so the copy can be checked again later, offline.
 
 ## 0. Before you start
@@ -86,7 +90,7 @@ the stick: exFAT sticks can't store the "executable" flag, so scripts there give
 "Permission denied". Copy it to your home folder, check it, and restore the flags:
 
 ```bash
-U=/mnt/usb/CS8409            # the CS8409 folder on your stick
+U=/run/media/$USER/YOUR_STICK/CS8409/Omarchy-iMac2019-CS8409   # the copy on your stick
 cp -r "$U" ~/Omarchy-iMac2019-CS8409
 cd ~/Omarchy-iMac2019-CS8409
 sha256sum -c --quiet SHA256SUMS && echo "COPY OK"
