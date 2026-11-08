@@ -11,7 +11,7 @@ CS8409 audio bridge, built and tested on one machine, step by step, in November 
 | Headphone jack | silent | not done yet |
 | Internal / headset microphone | not working | not done yet |
 | Suspend / resume | — | not tested yet (the driver re-runs its setup on wake) |
-| Bass and treble | — | **adjustable**: `bash tools/eq.sh 4 2` ([INSTALL.md step 8](INSTALL.md#8-bass-and-treble-optional)); tested on a stand-in PipeWire, not yet on the iMac |
+| Bass, treble and loudness | quiet even at 100% (no hardware volume; macOS adds a limiter) | **adjustable**: `bash tools/eq.sh 4 2 6` ([INSTALL.md step 8](INSTALL.md#8-bass-treble-and-loudness-optional)); bass/treble working on the iMac, loudness tested on a stand-in |
 | Apple's speaker tuning (crossover/EQ) | — | not done yet |
 
 Tested on kernel `7.2.15-1-omarchy` with PipeWire. Build-checked against Linux 7.3.1 (not yet
@@ -32,7 +32,7 @@ sudo ./install.sh
 ./tools/check.sh
 sudo ./tools/tone-test.sh
 # then, as your normal user: INSTALL.md step 7 (44.1 kHz + all four speakers)
-# optional: bash tools/eq.sh 4 2   (bass and treble, INSTALL.md step 8)
+# optional: bash tools/eq.sh 4 2 6   (bass, treble and loudness, INSTALL.md step 8)
 ```
 
 Full step-by-step instructions, including what to check after each step and how to
@@ -46,7 +46,7 @@ set up PipeWire for everyday listening (44.1 kHz, all four speakers): **[INSTALL
 | [`INSTALL.md`](INSTALL.md) | Full instructions for a fresh Omarchy install |
 | [`driver/`](driver/) | The driver source: Linux 7.2.15 CS8409 files + [`cs8409_apple.c`](driver/src/codecs/cirrus/cs8409_apple.c) |
 | [`config/`](config/) | modprobe settings, and the PipeWire 44.1 kHz and upmix settings |
-| [`tools/`](tools/) | Check, test, capture and live-switch scripts, and `eq.sh` (bass and treble) |
+| [`tools/`](tools/) | Check, test, capture and live-switch scripts, and `eq.sh` (bass, treble and loudness) |
 | [`docs/hardware-map.md`](docs/hardware-map.md) | Every chip, address, register and value measured on this iMac |
 | [`docs/how-it-was-found.md`](docs/how-it-was-found.md) | How the driver was worked out, version by version |
 | [`docs/chat-transcript.md`](docs/chat-transcript.md) | The full conversation in which this was built |

@@ -126,7 +126,16 @@ Four differences remained, each added as a live switch, defaulting to the refere
   peaks stayed at or below full scale, there was no crosstalk between left and right, and live
   changes, restarts and `off` all behaved. WirePlumber keeps the equaliser's volume (checked
   in 0.4.17 here and in the 0.5.19 source); if that saved volume is lost, 0.5 starts it at 50%.
-  Not yet heard on the iMac.
+  On the iMac it played, but quietly: WirePlumber had put back the speakers' old 25% volume
+  behind the equaliser (fixed: the script now holds the speakers at 100%).
+- **Loudness (8 November).** Even at 100% it was too quiet. The CS8409 has no hardware volume
+  (no amp-out on converters `0x02`/`0x03`), so PipeWire's 100% is full scale, and the amps
+  already run at `0xcf` = 0 dB as on macOS. macOS's extra loudness comes from processing, so
+  `eq.sh` gained a third value: a level boost into a look-ahead limiter (swh-plugins
+  `fastLookaheadLimiter`, ceiling −1 dB, release 0.3 s) on each speaker pair. On the stand-in,
+  loudness 6 raised quiet sound by exactly 6 dB, and at 12 a full-scale sweep and noise driven
+  past full scale peaked at exactly −1 dB on all four speakers. Raising the amps' own volume
+  (`apple_amp_volume`) was rejected: it would clip on loud passages.
 
 ## Final check (5 November 2026)
 

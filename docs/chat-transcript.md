@@ -788,3 +788,24 @@ of the same name: it measured the response at five settings, checked full-scale 
 clipping, checked left/right separation, and checked live changes, restarts and removal. A
 first version could have peaked 0.6 dB over full scale with bass boosted; 1 dB of headroom
 fixed that. Not yet heard on the iMac. Added as INSTALL.md step 8.*
+
+**Owner:** *(sent the PipeWire log: only the usual RTKit start-up messages, no errors)* There is
+sound, but only a little at 100%
+
+**Claude:** *(Suspected the speakers' own volume: WirePlumber can restore their old saved
+volume just after the script sets it to 100%. Claude made the script set it, wait and set it
+again until it holds, and made `bash tools/eq.sh` show both volumes.)*
+
+**Owner:** *(ran it: the equaliser had been off with the speakers at 25%; after `eq.sh 4 2`
+the equaliser was at 25% and the speakers' own volume held at 100%)*
+
+**Owner:** I'm watching a youtube video. I can hear it better but at 100% it is still too quiet
+
+**Claude:** That's a real limit, not a fault. The CS8409 has no hardware volume control, so
+PipeWire's 100% is already full scale, and the amplifiers run at 0 dB, as macOS sets them.
+macOS gets its extra loudness from processing: a level boost with a limiter. *(Claude added a
+third value to `eq.sh`, loudness 0–12 dB, which feeds a look-ahead limiter on each speaker
+pair with its ceiling at −1 dB, from Arch's `swh-plugins`. On the stand-in, loudness 6 added
+exactly 6 dB, and at 12 every peak stayed at −1 dB, including noise driven past full scale.
+Upgrading from the first version restarts the equaliser once and keeps the volume. INSTALL.md
+step 8 updated; `install.sh` now installs `swh-plugins`.)*

@@ -253,23 +253,25 @@ bass they aren't built for (step 8's equaliser cuts the deepest of it).
 **Volume:** use the normal desktop volume control (PipeWire). Never play loud material
 straight to the raw `hw:0,0` / `plughw:0,0` device: it has no volume control.
 
-## 8. Bass and treble (optional)
+## 8. Bass, treble and loudness (optional)
 
-If the sound is clear but flat, `tools/eq.sh` adds an equaliser with bass and treble
-controls. Run it as your **normal user**, after step 7:
+If the sound is clear but flat or too quiet, `tools/eq.sh` adds an equaliser with bass, treble
+and loudness controls. Run it as your **normal user**, after step 7:
 
 ```bash
-bash tools/eq.sh 4 2      # bass +4 dB, treble +2 dB
+sudo pacman -S --needed swh-plugins   # the limiter it uses (install.sh already adds it)
+bash tools/eq.sh 4 2 6                # bass +4 dB, treble +2 dB, loudness +6 dB
 ```
 
 It adds a sound output called **iMac Speakers (EQ)** in front of the speakers and makes it
-the default. Your volume control moves to it at the same volume. The setting is applied at
-once and kept after a reboot. Then:
+the default. Your volume control moves to it at the same volume, and the speakers' own
+volume is set to 100%. The setting is applied at once and kept after a reboot. Then:
 
 ```bash
-bash tools/eq.sh 6 3      # change it while music plays: takes effect immediately
-bash tools/eq.sh          # show the current setting
-bash tools/eq.sh 0 0      # flat: as before (1 dB quieter)
+bash tools/eq.sh 6 3 8    # change it while music plays: takes effect immediately
+bash tools/eq.sh 5 3      # change bass and treble, keep the loudness
+bash tools/eq.sh          # show the setting and both volumes
+bash tools/eq.sh 0 0 0    # flat: as before (1 dB quieter)
 bash tools/eq.sh off      # remove the equaliser
 ```
 
@@ -277,21 +279,34 @@ bash tools/eq.sh off      # remove the equaliser
 |---|---|
 | Bass (−12 to +8 dB) | Below about 150 Hz, **woofers only** |
 | Treble (−12 to +8 dB) | Above about 4 kHz, **tweeters only** |
+| Loudness (0 to 12 dB) | Raises the level of everything; a look-ahead limiter on each speaker pair turns the loudest peaks down smoothly, so nothing goes above −1 dB of full scale |
 | Always | Cuts the deep bass each speaker can't play: tweeters below 80 Hz, woofers below 40 Hz |
 
-Start around `3 2` to `5 3`. A boost works by turning the rest of that speaker down by the
-same amount, so it can't clip or distort, but more bass also makes the woofers move further:
-if they rattle or buzz at high volume, lower the bass. The equaliser runs inside PipeWire;
-the driver and the speakers' set-up are unchanged.
+**Why loudness is needed.** The iMac's sound chip has no volume control of its own, so
+PipeWire's 100% is already the loudest clean signal, and the amplifiers run at 0 dB, the same
+setting macOS uses. macOS gets its extra loudness from processing: a level boost with a
+limiter, as is usual for small built-in speakers. Loudness does the same. Turning the
+amplifiers up instead would clip on loud passages. The more loudness, the more the
+loudest moments are evened out; around 6 is a good start, and 10–12 starts to sound squashed.
 
-Tested on a stand-in PipeWire (1.0.5) here, not yet on the iMac. At every setting the
-measured response matched the table, no output went above full scale, and left and right
-stayed separate. The setting and the volume survived a restart, and `off` restored the old
-output and volume.
+Start around `4 2 6`. Bass and treble boosts turn the rest of that speaker down by the same
+amount, and the limiter catches everything else, so it can't clip. More bass still makes the
+woofers move further, though: if they rattle or buzz at high volume, lower the bass or the
+loudness. The equaliser runs inside PipeWire; the driver and the speakers' set-up are
+unchanged.
 
-**After running it, check:** `pactl get-default-sink` shows `imac_eq`, and music plays. If
-there's no sound, run `bash tools/eq.sh off` and send the output of
-`journalctl --user -u pipewire -b | tail -20`.
+Tested on a stand-in PipeWire (1.0.5) with a fake speaker output of the same name, then on the
+iMac (bass and treble; loudness first tested on the stand-in). On the stand-in:
+- At every setting the measured response matched the table, and left and right stayed separate.
+- Loudness 6 raised quiet sound by exactly 6 dB.
+- At loudness 12, a full-scale sweep and noise driven past full scale both peaked at exactly
+  −1 dB on all four speakers.
+- The setting and the volume survived a restart; `off` restored the old output and volume;
+  upgrading from the first version (without loudness) restarted it once and kept the volume.
+
+**After running it, check:** `bash tools/eq.sh` shows `Default output: imac_eq` and the
+speakers' own volume at 100%, and music plays. If there's no sound, run
+`bash tools/eq.sh off` and send the output of `journalctl --user -u pipewire -b | tail -20`.
 
 ## Kernel updates
 
@@ -350,7 +365,7 @@ systemctl --user restart pipewire pipewire-pulse wireplumber
 | `check.sh` warns the driver isn't installed for the running kernel | If the kernel is 7.4 or later, see [Kernel updates](#kernel-updates). Otherwise the headers were probably missing when the kernel updated: install `<kernel-package>-headers`, run `sudo dkms autoinstall`, and reboot. |
 | Distorted sound in videos | PipeWire is running at 48 kHz. See the check at the end of [step 7](#7-everyday-sound-441-khz-and-all-four-speakers). |
 | Thin sound, no bass | Only the tweeters are playing: the card is on its stereo profile, or the upmix setting is missing. Redo [step 7](#7-everyday-sound-441-khz-and-all-four-speakers). |
-| Flat sound | Add bass and treble with [step 8](#8-bass-and-treble-optional). |
+| Flat or quiet sound | Add bass, treble and loudness with [step 8](#8-bass-treble-and-loudness-optional). |
 | No sound after `tools/eq.sh` | Run `bash tools/eq.sh off`; the speakers play directly again. |
 | `CS42L83 ... no answer` | The reset pin setting didn't apply. Check `cat /sys/module/snd_hda_codec_cs8409/parameters/apple_cs42l83_reset_gpio` prints `1`. |
 | `I2C bus LOST` in the log | Send the log upstream; the driver tries to recover by itself. |

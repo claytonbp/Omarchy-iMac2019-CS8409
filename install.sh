@@ -47,7 +47,7 @@ case "$kver" in 7.2.*) echo "Kernel $kver: tested on this iMac." ;;
 kpkg=$(pacman -Qqo "/usr/lib/modules/$kver/vmlinuz" 2>/dev/null || true)
 [ -n "$kpkg" ] || die "can't tell which package owns kernel $kver"
 echo "Kernel $kver comes from package '$kpkg'; installing '$kpkg-headers' and build tools."
-pacman -S --needed --noconfirm base-devel dkms git alsa-utils alsa-tools python libpulse "$kpkg-headers"
+pacman -S --needed --noconfirm base-devel dkms git alsa-utils alsa-tools python libpulse swh-plugins "$kpkg-headers"
 [ -d "/usr/lib/modules/$kver/build" ] || die "headers for $kver are not in place; reboot into the newest kernel and retry"
 
 # 4. Driver via DKMS (rebuilt automatically on kernel updates)
