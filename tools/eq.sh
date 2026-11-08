@@ -32,9 +32,29 @@ wait_sink() { for _ in $(seq 40); do sink_exists "$1" && return 0; sleep 0.25; d
 vol_pct() { pactl get-sink-volume "$1" | grep -o '[0-9]*%' | head -1 | tr -d %; }
 
 current() { [ -f "$CONF" ] && sed -n 's/^# setting: //p' "$CONF" || echo "off (no equaliser)"; }
+show_vols() {
+	echo "Default output: $(pactl get-default-sink)"
+	sink_exists "$EQ" && echo "  iMac Speakers (EQ) volume: $(vol_pct "$EQ")%   (your volume control)"
+	if sink_exists "$EQ"; then
+		sink_exists "$HW" && echo "  speakers' own volume:      $(vol_pct "$HW")%   (should be 100% while the equaliser is on)"
+	else
+		sink_exists "$HW" && echo "  speakers' volume: $(vol_pct "$HW")%"
+	fi
+	return 0
+}
+# WirePlumber restores the speakers' saved volume when they reappear after a restart, which
+# can land after our change; so set it, wait, and set it again until it holds.
+speakers_full() {
+	for _ in 1 2 3 4 5 6; do
+		pactl set-sink-volume "$HW" 100%; sleep 1
+		[ "$(vol_pct "$HW")" = 100 ] && return 0
+	done
+	echo "WARNING: the speakers' own volume won't stay at 100%; check with: bash tools/eq.sh" >&2
+}
 
 if [ $# -eq 0 ]; then
 	echo "Equaliser: $(current)"
+	show_vols
 	echo "Change it with: bash tools/eq.sh BASS TREBLE   (e.g. 4 2), or: bash tools/eq.sh off"
 	exit 0
 fi
@@ -140,6 +160,7 @@ if sink_exists "$EQ"; then
 	pw-cli set-param "$id" Props "{ params = [
 		\"treb_L:Gain\" $T \"treb_R:Gain\" $T \"tw_lv_L:Gain\" $TW \"tw_lv_R:Gain\" $TW
 		\"bass_L:Gain\" $B \"bass_R:Gain\" $B \"wf_lv_L:Gain\" $WF \"wf_lv_R:Gain\" $WF ] }" >/dev/null
+	[ "$(vol_pct "$HW")" = 100 ] || speakers_full
 	echo "Equaliser: bass $B dB, treble $T dB (applied now; kept after a reboot)."
 else
 	# First time: start it (sound stops for a moment), keep the same loudness.
@@ -150,7 +171,7 @@ else
 	wait_sink "$HW" || true
 	pactl set-default-sink "$EQ"
 	pactl set-sink-volume "$EQ" "$v%"     # your volume control now sets this one
-	pactl set-sink-volume "$HW" 100%      # and the speakers pass it through
+	sleep 2; speakers_full                # and the speakers pass it through at full level
 	echo "Equaliser on: bass $B dB, treble $T dB. Default output: \"iMac Speakers (EQ)\" (volume $v%)."
 	echo "Change it any time with: bash tools/eq.sh BASS TREBLE"
 fi
