@@ -771,3 +771,20 @@ file), made `install.sh` exFAT-safe, and added "Making a USB copy" and install-f
 to INSTALL.md. It tested those commands verbatim from GitHub against a simulated stick with
 all executable flags stripped: the copy verified, the flags were restored, and a damaged and
 a missing file were both caught by name.*
+
+---
+
+## 8 November 2026
+
+**Owner:** The audio works fine, however the sound itself could be improved. The sound is flat
+but clear. There is no distortion. Is it possible to adjust the equaliser to add bass and treble
+
+*Claude wrote `tools/eq.sh`: a PipeWire equaliser output, "iMac Speakers (EQ)", in front of
+the 4-channel speakers. Bass is a low shelf below 150 Hz on the woofers, and treble a high
+shelf above 4 kHz on the tweeters; both are set in dB, for example `bash tools/eq.sh 4 2`.
+Boosts are made by lowering the rest of that speaker, so nothing clips. Deep bass that each
+speaker can't play is cut. Claude tested it on a stand-in PipeWire with a fake speaker output
+of the same name: it measured the response at five settings, checked full-scale sweeps for
+clipping, checked left/right separation, and checked live changes, restarts and removal. A
+first version could have peaked 0.6 dB over full scale with bass boosted; 1 dB of headroom
+fixed that. Not yet heard on the iMac. Added as INSTALL.md step 8.*

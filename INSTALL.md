@@ -248,10 +248,50 @@ forces the rate until PipeWire restarts.
 This drives the tweeters and woofers with the same full-range signal, and the woofers sit
 3 dB lower. Apple also splits the sound between them (a crossover) and adds EQ; recreating
 that is a separate, later step. Until then, avoid very high volumes: the tweeters receive
-bass they aren't built for.
+bass they aren't built for (step 8's equaliser cuts the deepest of it).
 
 **Volume:** use the normal desktop volume control (PipeWire). Never play loud material
 straight to the raw `hw:0,0` / `plughw:0,0` device: it has no volume control.
+
+## 8. Bass and treble (optional)
+
+If the sound is clear but flat, `tools/eq.sh` adds an equaliser with bass and treble
+controls. Run it as your **normal user**, after step 7:
+
+```bash
+bash tools/eq.sh 4 2      # bass +4 dB, treble +2 dB
+```
+
+It adds a sound output called **iMac Speakers (EQ)** in front of the speakers and makes it
+the default. Your volume control moves to it at the same volume. The setting is applied at
+once and kept after a reboot. Then:
+
+```bash
+bash tools/eq.sh 6 3      # change it while music plays: takes effect immediately
+bash tools/eq.sh          # show the current setting
+bash tools/eq.sh 0 0      # flat: as before (1 dB quieter)
+bash tools/eq.sh off      # remove the equaliser
+```
+
+| | What it changes |
+|---|---|
+| Bass (−12 to +8 dB) | Below about 150 Hz, **woofers only** |
+| Treble (−12 to +8 dB) | Above about 4 kHz, **tweeters only** |
+| Always | Cuts the deep bass each speaker can't play: tweeters below 80 Hz, woofers below 40 Hz |
+
+Start around `3 2` to `5 3`. A boost works by turning the rest of that speaker down by the
+same amount, so it can't clip or distort, but more bass also makes the woofers move further:
+if they rattle or buzz at high volume, lower the bass. The equaliser runs inside PipeWire;
+the driver and the speakers' set-up are unchanged.
+
+Tested on a stand-in PipeWire (1.0.5) here, not yet on the iMac. At every setting the
+measured response matched the table, no output went above full scale, and left and right
+stayed separate. The setting and the volume survived a restart, and `off` restored the old
+output and volume.
+
+**After running it, check:** `pactl get-default-sink` shows `imac_eq`, and music plays. If
+there's no sound, run `bash tools/eq.sh off` and send the output of
+`journalctl --user -u pipewire -b | tail -20`.
 
 ## Kernel updates
 
@@ -290,10 +330,11 @@ To update the driver for a newer kernel:
 sudo ./install.sh --remove
 ```
 
-Then reboot. The stock driver comes back. To remove the PipeWire settings from step 7 too
-(as your normal user):
+Then reboot. The stock driver comes back. To remove the PipeWire settings from steps 7 and 8
+too (as your normal user):
 
 ```bash
+bash tools/eq.sh off
 rm -f ~/.config/pipewire/pipewire.conf.d/50-imac-rate.conf \
       ~/.config/pipewire/client.conf.d/50-imac-upmix.conf \
       ~/.config/pipewire/pipewire-pulse.conf.d/50-imac-upmix.conf
@@ -309,6 +350,8 @@ systemctl --user restart pipewire pipewire-pulse wireplumber
 | `check.sh` warns the driver isn't installed for the running kernel | If the kernel is 7.4 or later, see [Kernel updates](#kernel-updates). Otherwise the headers were probably missing when the kernel updated: install `<kernel-package>-headers`, run `sudo dkms autoinstall`, and reboot. |
 | Distorted sound in videos | PipeWire is running at 48 kHz. See the check at the end of [step 7](#7-everyday-sound-441-khz-and-all-four-speakers). |
 | Thin sound, no bass | Only the tweeters are playing: the card is on its stereo profile, or the upmix setting is missing. Redo [step 7](#7-everyday-sound-441-khz-and-all-four-speakers). |
+| Flat sound | Add bass and treble with [step 8](#8-bass-and-treble-optional). |
+| No sound after `tools/eq.sh` | Run `bash tools/eq.sh off`; the speakers play directly again. |
 | `CS42L83 ... no answer` | The reset pin setting didn't apply. Check `cat /sys/module/snd_hda_codec_cs8409/parameters/apple_cs42l83_reset_gpio` prints `1`. |
 | `I2C bus LOST` in the log | Send the log upstream; the driver tries to recover by itself. |
 | `tone-test.sh` says the device is busy | Stop anything that's playing, then try again. |

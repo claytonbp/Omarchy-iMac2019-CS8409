@@ -116,6 +116,18 @@ Four differences remained, each added as a live switch, defaulting to the refere
   default 4-channel layout (FL, FC, FR, RC), not FL/FR/RL/RR. That briefly made a working set-up
   look as if the right tweeter were silent.
 
+- **Bass and treble (8 November).** The sound was clear but flat. `tools/eq.sh` adds a
+  PipeWire filter-chain output in front of the 4-channel speakers: a low shelf at 150 Hz on the
+  woofers (bass), a high shelf at 4 kHz on the tweeters (treble), and low cuts at 80 Hz
+  (tweeters) and 40 Hz (woofers). Each boost lowers the rest of that speaker by the same
+  amount, plus 1 dB of headroom for the small rise the low cuts add, so nothing can reach full
+  scale. Measured on a stand-in PipeWire 1.0.5 with a fake 4-channel sink of the same name,
+  using noise and full-scale sweeps: the response matched the design at every setting, the
+  peaks stayed at or below full scale, there was no crosstalk between left and right, and live
+  changes, restarts and `off` all behaved. WirePlumber keeps the equaliser's volume (checked
+  in 0.4.17 here and in the 0.5.19 source); if that saved volume is lost, 0.5 starts it at 50%.
+  Not yet heard on the iMac.
+
 ## Final check (5 November 2026)
 
 Before the iMac was reinstalled, the repository was cloned fresh from GitHub and checked
@@ -150,7 +162,7 @@ end to end.
 ## Still to do
 
 1. Apple's layout-16 tuning (crossover, EQ, unity-gain woofers) as a PipeWire filter-chain, to
-   replace the plain upmix.
+   replace the plain upmix and the simple bass/treble equaliser.
 2. Isolate which start-sequence switches are needed, and trim the diagnostics.
 3. Suspend/resume test.
 4. Headphones: CS42L83 init (CS42L42-compatible; avoid the EQ block) and jack detection
