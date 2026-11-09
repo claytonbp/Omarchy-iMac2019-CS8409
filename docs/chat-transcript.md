@@ -809,3 +809,49 @@ pair with its ceiling at −1 dB, from Arch's `swh-plugins`. On the stand-in, lo
 exactly 6 dB, and at 12 every peak stayed at −1 dB, including noise driven past full scale.
 Upgrading from the first version restarts the equaliser once and keeps the volume. INSTALL.md
 step 8 updated; `install.sh` now installs `swh-plugins`.)*
+
+**Owner:** I've settled on a loudness of about 10 which is OK. The whole sound though still
+seems flat with the settings 4 4 10. I am currently playing Boombayah by Black Pink through
+Apple Music and it is completely flat with no bass or treble
+
+**Claude:** *(Explained that a very loud master at loudness 10 keeps the limiter working
+constantly, which flattens the kick and the bass boost.)*
+
+**Owner:** Would it help if I played the same song but this time through MacOS. You can
+analyse the settings and apply to Omarchy?
+
+**Claude:** Playing it wouldn't give me anything to measure, but Apple's settings are stored in
+files. *(Gave macOS Terminal commands to copy `layout16.xml.zlib`, `Platforms.xml.zlib` and
+listings to an `AppleTuning` folder on the USB stick.)*
+
+**Owner:** Actually to be clear, I'm listening to Apple Music and Youtube through the Chromium
+web browser
+
+**Claude:** *(Both go through the same path. Suggested an A/B test, `eq.sh -12 -12 5` then
+`eq.sh 8 8 5`, to confirm that Chromium plays through the equaliser.)*
+
+**Owner:** You are correct. The first sounded dull and thin and the second very bright and
+boomy.
+
+**Owner:** *(Copied the files in macOS, then the Tunings folder too, and asked Claude to check
+the stick, which Claude read through the desktop app's link.)*
+
+**Claude:** `layout16.xml.zlib` holds Apple's whole speaker chain. This iMac's Tunings folder
+(`Mac-AA95B1DDAB278B95`) has only an AirPods setting. The key finding: on macOS the tweeters
+only play above about 2–3 kHz and the woofers below about 1.4 kHz, while on Omarchy the
+tweeters had been playing almost everything.
+
+## 9 November 2026
+
+**Owner:** I have now booted into Omarchy. I have the files you ask me to get when I was logged
+onto MacOS and copied onto the USB stick. Unfortunately, you cannot access these files
+directly unless I attached them here to the chat. Can you please let me know what to do?
+
+**Claude:** Nothing to do: a copy was kept from the day before. *(Built `tools/eqgen.py` and
+`eq.sh apple FILE`. The importer checks the layout and every connection, saves Apple's numbers
+privately in `~/.config/pipewire/`, and builds the EQ, crossover, levels and tweeter delay as
+exact biquads, with bass, treble and loudness on top. On the stand-in, the output matched the
+calculated response within 0.1 dB on all four speakers, the tweeter delay measured 8.00
+samples, nothing went above −1 dB at the most extreme settings, and upgrading, switching and
+restarting all worked. Apple's dynamic stages are approximated by the loudness control and
+limiters.)*

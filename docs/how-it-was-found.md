@@ -136,6 +136,28 @@ Four differences remained, each added as a live switch, defaulting to the refere
   loudness 6 raised quiet sound by exactly 6 dB, and at 12 a full-scale sweep and noise driven
   past full scale peaked at exactly −1 dB on all four speakers. Raising the amps' own volume
   (`apple_amp_volume`) was rejected: it would clip on loud passages.
+- **Apple's tuning (9 November).** Still flat at `4 4 10`, especially on very loud masters,
+  where the limiter flattened the kick drum. The owner copied macOS 15.8.1's
+  `layout16.xml.zlib` to the USB stick. Its `IntSpeaker` → `SoftwareDSP` section is Apple's
+  whole speaker chain, 14 stages: an input EQ (`DspEqualization32`), a compressor, a loudness
+  contour, a two-band compressor, a gain, a 2-to-4 split, a gain and an EQ for each speaker
+  pair (the woofer EQ includes a steep low-pass at about 1.4 kHz and deep notches above it;
+  the tweeter EQ a 4th-order high-pass at about 3 kHz), `DspBuzzKill` on the woofers (a
+  dynamic cut at their rattle frequencies), an 8-sample tweeter delay, a 4-channel limiter
+  and the output. Values are 32-bit floats stored as integers. Filter types decoded from the
+  data: 0 = low-pass, 1 = high-pass, 4 = peaking (the low-pass and high-pass land exactly
+  where a crossover belongs). Board ID `Mac-AA95B1DDAB278B95` has no speaker files under
+  `/System/Library/Audio/Tunings` (only an AirPods setting), so the layout file is the
+  source. The key finding: on macOS the tweeters get nothing below about 2 kHz, while here
+  they had been playing almost everything.
+  `tools/eqgen.py` imports the file (it checks the layout ID, codec and every connection, and
+  refuses anything else) and builds the static part exactly, as `bq_raw` biquads computed
+  with the RBJ cookbook formulas. Apple's numbers stay on the owner's machine. On the
+  stand-in, the output matched the calculated response within 0.1 dB on all four speakers,
+  and the tweeter delay measured 8.00 samples. The dynamic stages aren't reproduced (their
+  parameters aren't documented); the loudness control and limiters stand in for them. On a
+  loud-master test signal, Apple's chain kept the bass about 12 dB above the mids, against
+  about 2 dB with the simple equaliser at `4 4 10`, and the kick kept more of its peak.
 
 ## Final check (5 November 2026)
 
@@ -170,8 +192,10 @@ end to end.
 
 ## Still to do
 
-1. Apple's layout-16 tuning (crossover, EQ, unity-gain woofers) as a PipeWire filter-chain, to
-   replace the plain upmix and the simple bass/treble equaliser.
+1. Listen to Apple's tuning on the iMac and compare it with macOS by ear (built on
+   9 November, so far tested only on a stand-in). Then Apple's dynamic stages (compressor,
+   loudness contour, two-band compressor, BuzzKill): decode their parameters, or approximate
+   them with plugins.
 2. Isolate which start-sequence switches are needed, and trim the diagnostics.
 3. Suspend/resume test.
 4. Headphones: CS42L83 init (CS42L42-compatible; avoid the EQ block) and jack detection

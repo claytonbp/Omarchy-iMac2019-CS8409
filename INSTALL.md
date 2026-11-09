@@ -13,8 +13,9 @@ later:
   internet. Follow the "before you reinstall" parts of the
   [Wi-Fi guide](https://github.com/claytonbp/omarchy-imac2019-bcm4364) first.
 - **Apple's speaker tuning files, if macOS is still on the iMac and the reinstall will erase
-  it.** They're needed for the planned Apple-style crossover/EQ, not for anything in this
-  guide. In macOS Terminal:
+  it.** `layout16.xml.zlib` holds Apple's speaker tuning, which
+  [step 8](#8-sound-apples-tuning-bass-treble-and-loudness-optional) can use for the best sound.
+  (If you made a copy on 8 November, it's in `AppleTuning/` at the top of the USB stick.) In macOS Terminal:
   ```bash
   mkdir -p ~/Desktop/imac-audio-apple && cd ~/Desktop/imac-audio-apple
   R=/System/Library/Extensions/AppleHDA.kext/Contents/Resources
@@ -253,13 +254,49 @@ bass they aren't built for (step 8's equaliser cuts the deepest of it).
 **Volume:** use the normal desktop volume control (PipeWire). Never play loud material
 straight to the raw `hw:0,0` / `plughw:0,0` device: it has no volume control.
 
-## 8. Bass, treble and loudness (optional)
+## 8. Sound: Apple's tuning, bass, treble and loudness (optional)
 
-If the sound is clear but flat or too quiet, `tools/eq.sh` adds an equaliser with bass, treble
-and loudness controls. Run it as your **normal user**, after step 7:
+Out of the box the speakers sound clear but flat: the tweeters play almost everything and
+nothing shapes the sound for these speakers. `tools/eq.sh` puts an equaliser in front of
+them. Run it as your **normal user**, after step 7.
+
+### Apple's tuning (best)
+
+macOS shapes the sound with processing made for these exact speakers: a crossover (tweeters
+above about 3 kHz, woofers below about 1.4 kHz), about 75 EQ filters, a level for each
+speaker pair and a small tweeter delay. All of it is in `layout16.xml.zlib`, a file from
+macOS (see [Before you wipe the iMac](#before-you-wipe-the-imac)). `eq.sh` reads it and builds
+the same chain in PipeWire, filter for filter:
 
 ```bash
 sudo pacman -S --needed swh-plugins   # the limiter it uses (install.sh already adds it)
+bash tools/eq.sh apple /run/media/$USER/Omarchy_U/AppleTuning/layout16.xml.zlib
+```
+
+(Use your own path to the file: `lsblk` shows where the stick is mounted.) It starts with
+bass and treble flat and loudness 8 (or the loudness you already had). Then adjust it with
+the same controls as below, for example `bash tools/eq.sh 0 0 11`. Apple's numbers are saved
+privately in `~/.config/pipewire/imac-apple-tuning.json`; they aren't part of this repository.
+`bash tools/eq.sh apple off` goes back to the simple equaliser.
+
+What's copied exactly, and what isn't:
+- **Exact:** every EQ filter, the crossover, the levels and the 8-sample tweeter delay.
+  Measured on a stand-in PipeWire, the output matched Apple's calculated response within
+  0.1 dB on all four speakers, and the tweeter delay measured exactly 8 samples.
+- **Not copied:** Apple's dynamic stages (a compressor, a volume-dependent loudness contour,
+  a two-band compressor and "BuzzKill", which turns down the woofers' rattle frequencies at
+  high levels). Their settings aren't documented, so the loudness control and the limiters
+  stand in for them. If the woofers rattle at high volume, lower the bass or the loudness.
+- Apple's chain turns the midrange well down and sits about 7 dB below full scale; macOS
+  adds that back with its compressor. So it needs more loudness than the simple equaliser:
+  around 10–12.
+
+### Bass, treble and loudness
+
+Without Apple's file, `eq.sh` is a simple equaliser; with it, these controls adjust Apple's
+sound:
+
+```bash
 bash tools/eq.sh 4 2 6                # bass +4 dB, treble +2 dB, loudness +6 dB
 ```
 
@@ -271,7 +308,7 @@ volume is set to 100%. The setting is applied at once and kept after a reboot. T
 bash tools/eq.sh 6 3 8    # change it while music plays: takes effect immediately
 bash tools/eq.sh 5 3      # change bass and treble, keep the loudness
 bash tools/eq.sh          # show the setting and both volumes
-bash tools/eq.sh 0 0 0    # flat: as before (1 dB quieter)
+bash tools/eq.sh 0 0 0    # flat (simple equaliser: as before, 1 dB quieter)
 bash tools/eq.sh off      # remove the equaliser
 ```
 
@@ -280,17 +317,18 @@ bash tools/eq.sh off      # remove the equaliser
 | Bass (−12 to +8 dB) | Below about 150 Hz, **woofers only** |
 | Treble (−12 to +8 dB) | Above about 4 kHz, **tweeters only** |
 | Loudness (0 to 12 dB) | Raises the level of everything; a look-ahead limiter on each speaker pair turns the loudest peaks down smoothly, so nothing goes above −1 dB of full scale |
-| Always | Cuts the deep bass each speaker can't play: tweeters below 80 Hz, woofers below 40 Hz |
+| Always (simple equaliser) | Cuts the deep bass each speaker can't play: tweeters below 80 Hz, woofers below 40 Hz (Apple's tuning has its own crossover instead) |
 
 **Why loudness is needed.** The iMac's sound chip has no volume control of its own, so
 PipeWire's 100% is already the loudest clean signal, and the amplifiers run at 0 dB, the same
 setting macOS uses. macOS gets its extra loudness from processing: a level boost with a
 limiter, as is usual for small built-in speakers. Loudness does the same. Turning the
 amplifiers up instead would clip on loud passages. The more loudness, the more the
-loudest moments are evened out; around 6 is a good start, and 10–12 starts to sound squashed.
+loudest moments are evened out. Very loud recordings (much of today's pop) need less
+loudness than quieter ones such as YouTube videos, which YouTube evens out.
 
-Start around `4 2 6`. Bass and treble boosts turn the rest of that speaker down by the same
-amount, and the limiter catches everything else, so it can't clip. More bass still makes the
+With the simple equaliser, start around `4 2 6`. Bass and treble boosts turn the rest of that
+speaker down by the same amount, and the limiter catches everything else, so it can't clip. More bass still makes the
 woofers move further, though: if they rattle or buzz at high volume, lower the bass or the
 loudness. The equaliser runs inside PipeWire; the driver and the speakers' set-up are
 unchanged.
@@ -303,6 +341,10 @@ iMac (bass and treble; loudness first tested on the stand-in). On the stand-in:
   −1 dB on all four speakers.
 - The setting and the volume survived a restart; `off` restored the old output and volume;
   upgrading from the first version (without loudness) restarted it once and kept the volume.
+- Apple's tuning (9 November): see above. In addition, with bass and treble at +8 and
+  loudness 12, a full-scale sweep and noise pushed past full scale peaked at exactly −1 dB.
+  Upgrading from the 8 November version, switching to Apple's tuning and back, restarting,
+  and `off` all kept the settings and the volume.
 
 **After running it, check:** `bash tools/eq.sh` shows `Default output: imac_eq` and the
 speakers' own volume at 100%, and music plays. If there's no sound, run
@@ -365,7 +407,7 @@ systemctl --user restart pipewire pipewire-pulse wireplumber
 | `check.sh` warns the driver isn't installed for the running kernel | If the kernel is 7.4 or later, see [Kernel updates](#kernel-updates). Otherwise the headers were probably missing when the kernel updated: install `<kernel-package>-headers`, run `sudo dkms autoinstall`, and reboot. |
 | Distorted sound in videos | PipeWire is running at 48 kHz. See the check at the end of [step 7](#7-everyday-sound-441-khz-and-all-four-speakers). |
 | Thin sound, no bass | Only the tweeters are playing: the card is on its stereo profile, or the upmix setting is missing. Redo [step 7](#7-everyday-sound-441-khz-and-all-four-speakers). |
-| Flat or quiet sound | Add bass, treble and loudness with [step 8](#8-bass-treble-and-loudness-optional). |
+| Flat or quiet sound | Use Apple's tuning, or bass, treble and loudness: [step 8](#8-sound-apples-tuning-bass-treble-and-loudness-optional). |
 | No sound after `tools/eq.sh` | Run `bash tools/eq.sh off`; the speakers play directly again. |
 | `CS42L83 ... no answer` | The reset pin setting didn't apply. Check `cat /sys/module/snd_hda_codec_cs8409/parameters/apple_cs42l83_reset_gpio` prints `1`. |
 | `I2C bus LOST` in the log | Send the log upstream; the driver tries to recover by itself. |
